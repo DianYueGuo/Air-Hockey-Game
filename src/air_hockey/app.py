@@ -7,7 +7,9 @@ from typing import Protocol
 
 import pygame
 
+from air_hockey.ui.screens.calibration import CalibrationScreen
 from air_hockey.ui.screens.menu import MenuScreen
+from air_hockey.ui.screens.settings import SettingsScreen
 
 
 class Screen(Protocol):
@@ -52,7 +54,25 @@ class App:
         self.screen = pygame.display.set_mode(window_size)
         pygame.display.set_caption("Air Hockey")
         self.clock = pygame.time.Clock()
-        self.manager = ScreenManager(current=MenuScreen(window_size=window_size))
+        self.menu_screen = MenuScreen(
+            window_size=window_size,
+            on_settings=self._show_settings,
+            on_calibration=self._show_calibration,
+        )
+        self.manager = ScreenManager(current=self.menu_screen)
+
+    def _show_menu(self) -> None:
+        self.manager.current = self.menu_screen
+
+    def _show_settings(self) -> None:
+        self.manager.current = SettingsScreen(
+            window_size=self.window_size, on_back=self._show_menu
+        )
+
+    def _show_calibration(self) -> None:
+        self.manager.current = CalibrationScreen(
+            window_size=self.window_size, on_back=self._show_menu
+        )
 
     def run(self) -> int:
         running = True

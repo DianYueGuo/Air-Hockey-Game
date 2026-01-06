@@ -10,11 +10,22 @@ from air_hockey.ui.widgets import Button
 
 
 class MenuScreen:
-    def __init__(self, window_size: tuple[int, int]) -> None:
+    def __init__(
+        self,
+        window_size: tuple[int, int],
+        on_play: Callable[[], None] | None = None,
+        on_settings: Callable[[], None] | None = None,
+        on_calibration: Callable[[], None] | None = None,
+        on_quit: Callable[[], None] | None = None,
+    ) -> None:
         self.window_size = window_size
         self.font = pygame.font.SysFont("arial", 28)
         self.title_font = pygame.font.SysFont("arial", 44, bold=True)
         self.message = ""
+        self.on_play = on_play
+        self.on_settings = on_settings
+        self.on_calibration = on_calibration
+        self.on_quit = on_quit
         self.buttons = self._build_buttons()
 
     def _build_buttons(self) -> list[Button]:
@@ -46,16 +57,28 @@ class MenuScreen:
         self.message = text
 
     def _on_play(self) -> None:
-        self._set_message("Play selected (placeholder)")
+        if self.on_play is None:
+            self._set_message("Play selected (placeholder)")
+            return
+        self.on_play()
 
     def _on_settings(self) -> None:
-        self._set_message("Settings selected (placeholder)")
+        if self.on_settings is None:
+            self._set_message("Settings selected (placeholder)")
+            return
+        self.on_settings()
 
     def _on_calibration(self) -> None:
-        self._set_message("Calibration selected (placeholder)")
+        if self.on_calibration is None:
+            self._set_message("Calibration selected (placeholder)")
+            return
+        self.on_calibration()
 
     def _on_quit(self) -> None:
-        pygame.event.post(pygame.event.Event(pygame.QUIT))
+        if self.on_quit is None:
+            pygame.event.post(pygame.event.Event(pygame.QUIT))
+            return
+        self.on_quit()
 
     def handle_event(self, event: pygame.event.Event) -> None:
         for button in self.buttons:
