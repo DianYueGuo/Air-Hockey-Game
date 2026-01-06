@@ -10,6 +10,7 @@ import pygame
 from air_hockey.engine.physics import PhysicsWorld
 from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
+from air_hockey.ui.screens.hud import Hud
 
 
 @dataclass
@@ -32,7 +33,7 @@ class PlayScreen:
         self.score_right = 0
         self.render_config = self._build_render_config()
         self.font = pygame.font.SysFont("arial", 22)
-        self.score_font = pygame.font.SysFont("arial", 28, bold=True)
+        self.hud = Hud(window_size=window_size)
 
     def _build_render_config(self) -> RenderConfig:
         table_width_px = int(self.field.width * 400)
@@ -58,7 +59,7 @@ class PlayScreen:
         surface.fill((10, 16, 22))
         self._draw_table(surface)
         self._draw_entities(surface)
-        self._draw_score(surface)
+        self.hud.render_score(surface, self.score_left, self.score_right)
         hint = self.font.render("ESC to return to menu", True, (180, 190, 205))
         surface.blit(hint, (16, 16))
 
@@ -100,12 +101,6 @@ class PlayScreen:
         self._draw_circle(surface, puck.position, 0.04, (220, 230, 240))
         self._draw_circle(surface, mallet_left.position, 0.07, (70, 170, 230))
         self._draw_circle(surface, mallet_right.position, 0.07, (230, 90, 90))
-
-    def _draw_score(self, surface: pygame.Surface) -> None:
-        score_text = f"{self.score_left}   :   {self.score_right}"
-        score_surf = self.score_font.render(score_text, True, (235, 240, 245))
-        score_rect = score_surf.get_rect(center=(self.window_size[0] // 2, 36))
-        surface.blit(score_surf, score_rect)
 
     def _check_goal(self) -> None:
         puck = self.physics.entities.puck
