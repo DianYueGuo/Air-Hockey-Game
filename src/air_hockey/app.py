@@ -9,6 +9,7 @@ import pygame
 
 from air_hockey.ui.screens.calibration import CalibrationScreen
 from air_hockey.ui.screens.menu import MenuScreen
+from air_hockey.ui.screens.play import PlayScreen
 from air_hockey.ui.screens.settings import SettingsScreen
 
 
@@ -56,6 +57,7 @@ class App:
         self.clock = pygame.time.Clock()
         self.menu_screen = MenuScreen(
             window_size=window_size,
+            on_play=self._show_play,
             on_settings=self._show_settings,
             on_calibration=self._show_calibration,
         )
@@ -71,6 +73,11 @@ class App:
 
     def _show_calibration(self) -> None:
         self.manager.current = CalibrationScreen(
+            window_size=self.window_size, on_back=self._show_menu
+        )
+
+    def _show_play(self) -> None:
+        self.manager.current = PlayScreen(
             window_size=self.window_size, on_back=self._show_menu
         )
 
