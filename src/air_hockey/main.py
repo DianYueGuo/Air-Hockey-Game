@@ -12,23 +12,12 @@ def main() -> int:
         return 1
 
     pygame.init()
-    window_size = (960, 540)
-    screen = pygame.display.set_mode(window_size)
-    pygame.display.set_caption("Air Hockey")
-    clock = pygame.time.Clock()
+    from air_hockey.app import App
 
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        screen.fill((15, 20, 30))
-        pygame.display.flip()
-        clock.tick(60)
-
+    app = App(window_size=(960, 540))
+    exit_code = app.run()
     pygame.quit()
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":
