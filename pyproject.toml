@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "air-hockey"
+version = "0.1.0"
+description = "Air Hockey with Box2D, Pygame, and OpenCV"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "pygame",
+  "opencv-python",
+  "box2d-py",
+  "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pyinstaller",
+  "pytest",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
