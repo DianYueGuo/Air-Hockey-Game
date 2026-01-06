@@ -8,6 +8,7 @@ from typing import Callable
 import pygame
 
 from air_hockey.engine.physics import PhysicsWorld
+from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
 
 
@@ -22,9 +23,11 @@ class PlayScreen:
         self.window_size = window_size
         self.on_back = on_back
         self.field = FieldSpec()
+        self.mallet_spec = MalletSpec()
         self.physics = PhysicsWorld(self.field)
         self.clock_accumulator = 0.0
         self.fixed_time_step = 1.0 / 120.0
+        self.mallet_speed = 1.2
         self.render_config = self._build_render_config()
         self.font = pygame.font.SysFont("arial", 22)
 
@@ -41,7 +44,9 @@ class PlayScreen:
 
     def update(self, dt: float) -> None:
         self.clock_accumulator += dt
+        keys = pygame.key.get_pressed()
         while self.clock_accumulator >= self.fixed_time_step:
+            self._update_mallets(keys, self.fixed_time_step)
             self.physics.step(self.fixed_time_step)
             self.clock_accumulator -= self.fixed_time_step
 
@@ -78,6 +83,57 @@ class PlayScreen:
         self._draw_circle(surface, puck.position, 0.04, (220, 230, 240))
         self._draw_circle(surface, mallet_left.position, 0.07, (70, 170, 230))
         self._draw_circle(surface, mallet_right.position, 0.07, (230, 90, 90))
+
+    def _update_mallets(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
+        left_pos = self._move_mallet(
+            keys,
+            self.physics.entities.mallet_left.position,
+            dt,
+            left=True,
+        )
+        right_pos = self._move_mallet(
+            keys,
+            self.physics.entities.mallet_right.position,
+            dt,
+            left=False,
+        )
+        self.physics.set_mallet_positions(left_pos, right_pos)
+
+    def _move_mallet(
+        self,
+        keys: pygame.key.ScancodeWrapper,
+        current_pos: tuple[float, float],
+        dt: float,
+        left: bool,
+    ) -> tuple[float, float]:
+        if left:
+            dx = (keys[pygame.K_d] - keys[pygame.K_a]) * self.mallet_speed * dt
+            dy = (keys[pygame.K_s] - keys[pygame.K_w]) * self.mallet_speed * dt
+        else:
+            dx = (keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]) * self.mallet_speed * dt
+            dy = (keys[pygame.K_DOWN] - keys[pygame.K_UP]) * self.mallet_speed * dt
+
+        x = current_pos[0] + dx
+        y = current_pos[1] + dy
+
+        half_width = self.field.width / 2.0
+        half_height = self.field.height / 2.0
+        radius = self.mallet_spec.radius
+
+        if left:
+            x_min = -half_width + radius
+            x_max = -radius
+        else:
+            x_min = radius
+            x_max = half_width - radius
+
+        y_min = -half_height + radius
+        y_max = half_height - radius
+
+        x = max(x_min, min(x, x_max))
+        y = max(y_min, min(y, y_max))
+
+        return (x, y)
 
     def _draw_circle(
         self, surface: pygame.Surface, position: tuple[float, float], radius: float, color: tuple[int, int, int]

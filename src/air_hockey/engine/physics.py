@@ -61,16 +61,23 @@ class PhysicsWorld:
     def _create_mallet(self, side: str) -> b2.body:
         spec = MalletSpec()
         x = -self.field.width * 0.25 if side == "left" else self.field.width * 0.25
-        body = self.world.CreateDynamicBody(position=(x, 0.0))
+        body = self.world.CreateKinematicBody(position=(x, 0.0))
         body.CreateCircleFixture(
             radius=spec.radius,
             density=spec.density,
             friction=spec.friction,
             restitution=spec.restitution,
         )
-        body.linearDamping = spec.linear_damping
         return body
 
     def step(self, time_step: float) -> None:
         self.world.Step(time_step, vel_iters=8, pos_iters=3)
         self.world.ClearForces()
+
+    def set_mallet_positions(
+        self, left_pos: tuple[float, float], right_pos: tuple[float, float]
+    ) -> None:
+        self.entities.mallet_left.linearVelocity = (0.0, 0.0)
+        self.entities.mallet_right.linearVelocity = (0.0, 0.0)
+        self.entities.mallet_left.position = left_pos
+        self.entities.mallet_right.position = right_pos
