@@ -7,6 +7,8 @@ from typing import Protocol
 
 import pygame
 
+from air_hockey.ui.screens.menu import MenuScreen
+
 
 class Screen(Protocol):
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -50,7 +52,7 @@ class App:
         self.screen = pygame.display.set_mode(window_size)
         pygame.display.set_caption("Air Hockey")
         self.clock = pygame.time.Clock()
-        self.manager = ScreenManager(current=PlaceholderScreen())
+        self.manager = ScreenManager(current=MenuScreen(window_size=window_size))
 
     def run(self) -> int:
         running = True
