@@ -16,6 +16,7 @@ from air_hockey.engine.physics import PhysicsWorld
 from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode, WindowOptions
 from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
+from air_hockey.game.themes import ThemeManager
 from air_hockey.ui.screens.hud import Hud
 from air_hockey.ui.screens.scoreboard import ScoreboardWindow
 
@@ -57,9 +58,10 @@ class PlayScreen:
         self.score_right = 0
         self.trail_positions: list[tuple[float, float]] = []
         self.trail_max = 12
+        self.theme_manager = ThemeManager()
         self.render_config = self._build_render_config()
         self.font = pygame.font.SysFont("arial", 22)
-        self.hud = Hud(window_size=window_size)
+        self.hud = Hud(window_size=window_size, score_color=self.theme_manager.theme.hud_score)
         self.scoreboard_window: ScoreboardWindow | None = None
 
     def _build_render_config(self) -> RenderConfig:
@@ -112,12 +114,13 @@ class PlayScreen:
         return int(center_x + px), int(center_y + py)
 
     def _draw_table(self, surface: pygame.Surface) -> None:
-        pygame.draw.rect(surface, (32, 44, 58), self.render_config.table_rect, border_radius=16)
-        pygame.draw.rect(surface, (90, 110, 130), self.render_config.table_rect, width=4, border_radius=16)
+        theme = self.theme_manager.theme
+        pygame.draw.rect(surface, theme.table_background, self.render_config.table_rect, border_radius=16)
+        pygame.draw.rect(surface, theme.table_border, self.render_config.table_rect, width=4, border_radius=16)
         center_x = self.render_config.table_rect.centerx
         pygame.draw.line(
             surface,
-            (70, 90, 110),
+            theme.table_center_line,
             (center_x, self.render_config.table_rect.top),
             (center_x, self.render_config.table_rect.bottom),
             width=2,
@@ -141,9 +144,10 @@ class PlayScreen:
         mallet_right = self.physics.entities.mallet_right
 
         self._draw_trail(surface)
-        self._draw_circle(surface, puck.position, 0.04, (220, 230, 240))
-        self._draw_circle(surface, mallet_left.position, 0.07, (70, 170, 230))
-        self._draw_circle(surface, mallet_right.position, 0.07, (230, 90, 90))
+        theme = self.theme_manager.theme
+        self._draw_circle(surface, puck.position, 0.04, theme.puck)
+        self._draw_circle(surface, mallet_left.position, 0.07, theme.mallet_left)
+        self._draw_circle(surface, mallet_right.position, 0.07, theme.mallet_right)
         self._draw_detection_marker(surface)
 
     def _check_goal(self) -> None:
@@ -175,7 +179,7 @@ class PlayScreen:
     def _draw_trail(self, surface: pygame.Surface) -> None:
         if len(self.trail_positions) < 2:
             return
-        base_color = (140, 170, 200)
+        base_color = self.theme_manager.theme.trail
         for index, position in enumerate(self.trail_positions[:-1]):
             alpha = (index + 1) / len(self.trail_positions)
             color = (

@@ -1,0 +1,17 @@
+{
+  "name": "Retro",
+  "table": {
+    "background": [18, 34, 26],
+    "border": [120, 170, 120],
+    "center_line": [80, 140, 100]
+  },
+  "entities": {
+    "puck": [240, 220, 90],
+    "mallet_left": [90, 220, 170],
+    "mallet_right": [220, 110, 140],
+    "trail": [210, 180, 120]
+  },
+  "hud": {
+    "score": [235, 230, 210]
+  }
+}

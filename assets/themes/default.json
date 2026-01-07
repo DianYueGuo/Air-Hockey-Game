@@ -1,0 +1,17 @@
+{
+  "name": "Default",
+  "table": {
+    "background": [32, 44, 58],
+    "border": [90, 110, 130],
+    "center_line": [70, 90, 110]
+  },
+  "entities": {
+    "puck": [220, 230, 240],
+    "mallet_left": [70, 170, 230],
+    "mallet_right": [230, 90, 90],
+    "trail": [140, 170, 200]
+  },
+  "hud": {
+    "score": [235, 240, 245]
+  }
+}
