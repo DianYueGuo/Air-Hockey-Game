@@ -309,6 +309,7 @@ class PlayScreen:
         if frame is None:
             return
         frame_bgr = cv2.flip(frame.frame, 1)
+        frame_height, frame_width = frame_bgr.shape[:2]
         frame_rgb = frame_bgr[:, :, ::-1]
         overlay_width = 240
         overlay_height = int(overlay_width * frame_rgb.shape[0] / frame_rgb.shape[1])
@@ -319,6 +320,30 @@ class PlayScreen:
         overlay_rect = overlay.get_rect()
         overlay_rect.midbottom = (self.window_size[0] // 2, self.window_size[1] - 10)
         surface.blit(overlay, overlay_rect)
+        self._draw_overlay_markers(surface, overlay_rect, frame_width, frame_height)
+
+    def _draw_overlay_markers(
+        self,
+        surface: pygame.Surface,
+        overlay_rect: pygame.Rect,
+        frame_width: int,
+        frame_height: int,
+    ) -> None:
+        if frame_width <= 0 or frame_height <= 0:
+            return
+        mid_x = frame_width // 2
+        if self.last_detection_left:
+            x_norm = self.last_detection_left[0] / max(1, mid_x)
+            y_norm = self.last_detection_left[1] / max(1, frame_height)
+            x_pos = overlay_rect.left + int(x_norm * (overlay_rect.width / 2))
+            y_pos = overlay_rect.top + int(y_norm * overlay_rect.height)
+            pygame.draw.circle(surface, (255, 190, 80), (x_pos, y_pos), 6, width=2)
+        if self.last_detection_right:
+            x_norm = self.last_detection_right[0] / max(1, mid_x)
+            y_norm = self.last_detection_right[1] / max(1, frame_height)
+            x_pos = overlay_rect.left + int(overlay_rect.width / 2 + x_norm * (overlay_rect.width / 2))
+            y_pos = overlay_rect.top + int(y_norm * overlay_rect.height)
+            pygame.draw.circle(surface, (160, 220, 120), (x_pos, y_pos), 6, width=2)
 
     def _render_scoreboard_window(self, surface: pygame.Surface) -> None:
         if self.scoreboard_window is None:
