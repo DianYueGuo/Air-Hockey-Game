@@ -120,11 +120,12 @@ class CalibrationScreen:
         frame = self.camera.get_latest()
         if frame is None:
             return
-        frame_height, frame_width = frame.frame.shape[:2]
+        frame_bgr = cv2.flip(frame.frame, 1)
+        frame_height, frame_width = frame_bgr.shape[:2]
         mid_x = frame_width // 2
 
-        left_frame = frame.frame[:, :mid_x]
-        right_frame = frame.frame[:, mid_x:]
+        left_frame = frame_bgr[:, :mid_x]
+        right_frame = frame_bgr[:, mid_x:]
 
         left_result = detect_largest_ball(left_frame, self.hsv_left)
         right_result = detect_largest_ball(right_frame, self.hsv_right)
@@ -173,7 +174,7 @@ class CalibrationScreen:
         frame = self.camera.get_latest()
         if frame is None:
             return
-        frame_bgr = frame.frame
+        frame_bgr = cv2.flip(frame.frame, 1)
         frame_rgb = frame_bgr[:, :, ::-1]
         preview_width = 320
         preview_height = int(preview_width * frame_rgb.shape[0] / frame_rgb.shape[1])
@@ -214,7 +215,8 @@ class CalibrationScreen:
         frame = self.camera.get_latest()
         if frame is None:
             return
-        frame_height, frame_width = frame.frame.shape[:2]
+        frame_bgr = cv2.flip(frame.frame, 1)
+        frame_height, frame_width = frame_bgr.shape[:2]
         mid_x = frame_width // 2
         if left:
             x_norm = detection[0] / max(1, mid_x)
