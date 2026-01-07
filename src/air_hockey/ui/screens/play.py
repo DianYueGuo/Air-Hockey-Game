@@ -54,6 +54,9 @@ class PlayScreen:
         self.last_detection_left: tuple[int, int] | None = None
         self.last_detection_right: tuple[int, int] | None = None
         self.use_camera_control = True
+        self.smoothing = settings.smoothing
+        self.smoothed_left: tuple[float, float] | None = None
+        self.smoothed_right: tuple[float, float] | None = None
         self.calibration = load_calibration()
         self.physics = PhysicsWorld(
             self.field,
@@ -355,12 +358,16 @@ class PlayScreen:
         if left:
             detection = self.last_detection_left
             if detection is None:
-                return None
-            return self._map_detection_to_world(detection, frame_height, mid_x, left=True)
+                return self.smoothed_left
+            world_pos = self._map_detection_to_world(detection, frame_height, mid_x, left=True)
+            self.smoothed_left = self._apply_smoothing(self.smoothed_left, world_pos)
+            return self.smoothed_left
         detection = self.last_detection_right
         if detection is None:
-            return None
-        return self._map_detection_to_world(detection, frame_height, mid_x, left=False)
+            return self.smoothed_right
+        world_pos = self._map_detection_to_world(detection, frame_height, mid_x, left=False)
+        self.smoothed_right = self._apply_smoothing(self.smoothed_right, world_pos)
+        return self.smoothed_right
 
     def _map_detection_to_world(
         self, detection: tuple[int, int], frame_height: int, half_width_px: int, left: bool
@@ -392,6 +399,16 @@ class PlayScreen:
             world_x = 0.0 + x_norm * half_width
         world_y = (-half_height) + y_norm * self.field.height
         return self._clamp_mallet_position((world_x, world_y), left=left)
+
+    def _apply_smoothing(
+        self, current: tuple[float, float] | None, target: tuple[float, float]
+    ) -> tuple[float, float]:
+        if current is None or self.smoothing <= 0.0:
+            return target
+        alpha = max(0.0, min(1.0, self.smoothing))
+        x = alpha * target[0] + (1.0 - alpha) * current[0]
+        y = alpha * target[1] + (1.0 - alpha) * current[1]
+        return (x, y)
 
     @staticmethod
     def _normalize_axis(

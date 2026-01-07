@@ -1,4 +1,4 @@
-"""Settings screen with basic toggles and physics tuning."""
+"""Settings screen with basic toggles and tuning panels."""
 
 from __future__ import annotations
 
@@ -29,7 +29,14 @@ class SettingsScreen:
         )
         self.main_buttons = self._build_main_buttons()
         self.physics_buttons = self._build_physics_buttons()
+        self.vision_buttons = self._build_vision_buttons()
         self.physics_back_button = Button(
+            rect=pygame.Rect(window_size[0] - 220, window_size[1] - 80, 180, 44),
+            label="Back to Settings",
+            on_click=self._enter_main,
+            font=self.font,
+        )
+        self.vision_back_button = Button(
             rect=pygame.Rect(window_size[0] - 220, window_size[1] - 80, 180, 44),
             label="Back to Settings",
             on_click=self._enter_main,
@@ -44,6 +51,7 @@ class SettingsScreen:
             ("Fullscreen", self._toggle_fullscreen),
             ("Display", self._cycle_display),
             ("Swap Colors", self._swap_hsv_presets),
+            ("Vision Tuning", self._enter_vision),
             ("Physics Tuning", self._enter_physics),
         ]
         button_width = 320
@@ -99,12 +107,41 @@ class SettingsScreen:
 
         return buttons
 
+    def _build_vision_buttons(self) -> list[Button]:
+        buttons: list[Button] = []
+        button_width = 120
+        button_height = 40
+        left_x = self.window_size[0] // 2 - 140
+        right_x = self.window_size[0] // 2 + 20
+        y = 220
+        buttons.append(
+            Button(
+                rect=pygame.Rect(left_x, y, button_width, button_height),
+                label="-",
+                on_click=self._dec_smoothing,
+                font=self.font,
+            )
+        )
+        buttons.append(
+            Button(
+                rect=pygame.Rect(right_x, y, button_width, button_height),
+                label="+",
+                on_click=self._inc_smoothing,
+                font=self.font,
+            )
+        )
+        return buttons
+
     def _exit(self) -> None:
         save_settings(self.settings)
         self.on_back()
 
     def _enter_physics(self) -> None:
         self.mode = "physics"
+        self.message = ""
+
+    def _enter_vision(self) -> None:
+        self.mode = "vision"
         self.message = ""
 
     def _enter_main(self) -> None:
@@ -194,29 +231,45 @@ class SettingsScreen:
         )
         self.message = "Physics updated. Re-enter Play."
 
+    def _inc_smoothing(self) -> None:
+        self.settings.smoothing = self._clamp(self.settings.smoothing + 0.05, 0.0, 1.0)
+        self.message = "Vision updated. Re-enter Play."
+
+    def _dec_smoothing(self) -> None:
+        self.settings.smoothing = self._clamp(self.settings.smoothing - 0.05, 0.0, 1.0)
+        self.message = "Vision updated. Re-enter Play."
+
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 self._exit()
                 return
-            if event.key == pygame.K_BACKSPACE and self.mode == "physics":
+            if event.key == pygame.K_BACKSPACE and self.mode != "main":
                 self._enter_main()
                 return
         self.back_button.handle_event(event)
         if self.mode == "main":
             for button in self.main_buttons:
                 button.handle_event(event)
-        else:
+        elif self.mode == "physics":
             for button in self.physics_buttons:
                 button.handle_event(event)
             self.physics_back_button.handle_event(event)
+        else:
+            for button in self.vision_buttons:
+                button.handle_event(event)
+            self.vision_back_button.handle_event(event)
 
     def update(self, dt: float) -> None:
         pass
 
     def render(self, surface: pygame.Surface) -> None:
         surface.fill((18, 22, 32))
-        title = "Settings" if self.mode == "main" else "Physics Tuning"
+        title = "Settings"
+        if self.mode == "physics":
+            title = "Physics Tuning"
+        elif self.mode == "vision":
+            title = "Vision Tuning"
         title_surf = self.title_font.render(title, True, (235, 240, 245))
         title_rect = title_surf.get_rect(center=(self.window_size[0] // 2, 110))
         surface.blit(title_surf, title_rect)
@@ -229,7 +282,7 @@ class SettingsScreen:
                 msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
                 msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 420))
                 surface.blit(msg_surf, msg_rect)
-        else:
+        elif self.mode == "physics":
             self._draw_physics_values(surface)
             for button in self.physics_buttons:
                 button.draw(surface)
@@ -238,6 +291,15 @@ class SettingsScreen:
                 msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 430))
                 surface.blit(msg_surf, msg_rect)
             self.physics_back_button.draw(surface)
+        else:
+            self._draw_vision_values(surface)
+            for button in self.vision_buttons:
+                button.draw(surface)
+            if self.message:
+                msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
+                msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 380))
+                surface.blit(msg_surf, msg_rect)
+            self.vision_back_button.draw(surface)
 
         self.back_button.draw(surface)
 
@@ -249,10 +311,12 @@ class SettingsScreen:
             "Fullscreen": f"Fullscreen: {'ON' if self.settings.fullscreen else 'OFF'}",
             "Display": f"Display: {self.settings.display_index}",
             "Swap Colors": "Swap Colors",
+            "Vision Tuning": "Vision Tuning",
             "Physics Tuning": "Physics Tuning",
         }
         for button in self.main_buttons:
-            button.label = labels.get(button.label.split(":")[0], button.label)
+            key = button.label.split(":")[0]
+            button.label = labels.get(key, button.label)
 
     def _draw_physics_values(self, surface: pygame.Surface) -> None:
         lines = [
@@ -266,6 +330,12 @@ class SettingsScreen:
             surf = self.small_font.render(line, True, (200, 210, 220))
             rect = surf.get_rect(center=(self.window_size[0] // 2, start_y + index * 52))
             surface.blit(surf, rect)
+
+    def _draw_vision_values(self, surface: pygame.Surface) -> None:
+        line = f"Smoothing: {self.settings.smoothing:.2f}"
+        surf = self.small_font.render(line, True, (200, 210, 220))
+        rect = surf.get_rect(center=(self.window_size[0] // 2, 180))
+        surface.blit(surf, rect)
 
     @staticmethod
     def _clamp(value: float, min_value: float, max_value: float) -> float:
