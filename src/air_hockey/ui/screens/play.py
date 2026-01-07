@@ -246,7 +246,8 @@ class PlayScreen:
             left_pos,
             right_pos,
             time_step=self.fixed_time_step,
-            teleport=True,
+            teleport=False,
+            max_speed=self.mallet_speed,
         )
         self.trail_positions.clear()
 
