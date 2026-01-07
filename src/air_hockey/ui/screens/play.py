@@ -288,6 +288,8 @@ class PlayScreen:
             if self.last_detection_left:
                 cv2.circle(preview, self.last_detection_left, 8, (0, 200, 255), 2)
             if self.last_detection_right:
+                frame_height, frame_width = frame_bgr.shape[:2]
+                mid_x = frame_width // 2
                 right_pos = (self.last_detection_right[0] + mid_x, self.last_detection_right[1])
                 cv2.circle(preview, right_pos, 8, (120, 255, 120), 2)
             cv2.imshow("Air Hockey Camera", preview)
