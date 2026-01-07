@@ -24,6 +24,7 @@ src/air_hockey/game/entities.py
 src/air_hockey/game/field.py
 src/air_hockey/game/themes.py
 src/air_hockey/ui/__init__.py
+src/air_hockey/ui/fonts.py
 src/air_hockey/ui/widgets.py
 src/air_hockey/ui/screens/__init__.py
 src/air_hockey/ui/screens/calibration.py
