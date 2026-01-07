@@ -457,6 +457,7 @@ class PlayScreen:
             0.0,
             float(frame_height),
         )
+        x_norm = 1.0 - x_norm
         half_width = self.field.width / 2.0
         half_height = self.field.height / 2.0
         if left:
