@@ -116,6 +116,7 @@ class PhysicsWorld:
         )
         body.linearDamping = damping
         body.bullet = True
+        body.allowSleep = False
         body.userData = "puck"
         return body
 
@@ -139,6 +140,7 @@ class PhysicsWorld:
         self.world.ClearForces()
         if self.max_puck_speed:
             self._clamp_puck_speed()
+        self._resolve_puck_wall_stickiness()
 
     def _clamp_puck_speed(self) -> None:
         puck = self.entities.puck
@@ -150,6 +152,43 @@ class PhysicsWorld:
         if speed_sq > max_speed * max_speed:
             scale = max_speed / (speed_sq ** 0.5)
             puck.linearVelocity = (vx * scale, vy * scale)
+
+    def _resolve_puck_wall_stickiness(self) -> None:
+        puck = self.entities.puck
+        if not puck.fixtures:
+            return
+        radius = puck.fixtures[0].shape.radius
+        half_width = self.field.width / 2.0
+        half_height = self.field.height / 2.0
+        goal_half = self.field.goal_height / 2.0
+        min_bounce = 0.15
+
+        x, y = puck.position
+        vx, vy = puck.linearVelocity
+        adjusted = False
+
+        if y - radius <= -half_height:
+            y = -half_height + radius
+            vy = abs(vy) if abs(vy) >= min_bounce else min_bounce
+            adjusted = True
+        elif y + radius >= half_height:
+            y = half_height - radius
+            vy = -abs(vy) if abs(vy) >= min_bounce else -min_bounce
+            adjusted = True
+
+        if abs(y) >= goal_half:
+            if x - radius <= -half_width:
+                x = -half_width + radius
+                vx = abs(vx) if abs(vx) >= min_bounce else min_bounce
+                adjusted = True
+            elif x + radius >= half_width:
+                x = half_width - radius
+                vx = -abs(vx) if abs(vx) >= min_bounce else -min_bounce
+                adjusted = True
+
+        if adjusted:
+            puck.position = (x, y)
+            puck.linearVelocity = (vx, vy)
 
     def update_puck_settings(
         self, restitution: float, damping: float, max_speed: float
