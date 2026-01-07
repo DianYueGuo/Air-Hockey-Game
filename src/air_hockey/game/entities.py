@@ -11,7 +11,7 @@ class PuckSpec:
     density: float = 0.8
     friction: float = 0.1
     restitution: float = 0.9
-    linear_damping: float = 0.2
+    linear_damping: float = 0.05
 
 
 @dataclass(frozen=True)
