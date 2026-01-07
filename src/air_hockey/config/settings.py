@@ -18,9 +18,9 @@ class Settings:
     hsv_left: str = "orange"
     hsv_right: str = "orange"
     smoothing: float = 0.2
-    puck_restitution: float = 0.8
-    puck_damping: float = 0.2
-    max_puck_speed: float = 2.0
+    puck_restitution: float = 0.6
+    puck_damping: float = 0.6
+    max_puck_speed: float = 1.4
     mallet_speed_limit: float = 2.0
     hsv_left_range: dict[str, list[int]] | None = None
     hsv_right_range: dict[str, list[int]] | None = None

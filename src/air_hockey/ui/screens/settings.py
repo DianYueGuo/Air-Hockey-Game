@@ -247,9 +247,9 @@ class SettingsScreen:
         self.message = "Physics updated. Re-enter Play."
 
     def _reset_physics(self) -> None:
-        self.settings.puck_restitution = 0.8
-        self.settings.puck_damping = 0.2
-        self.settings.max_puck_speed = 2.0
+        self.settings.puck_restitution = 0.6
+        self.settings.puck_damping = 0.6
+        self.settings.max_puck_speed = 1.4
         self.settings.mallet_speed_limit = 2.0
         self.message = "Physics reset. Re-enter Play."
 
