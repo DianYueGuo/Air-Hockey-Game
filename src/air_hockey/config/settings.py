@@ -22,6 +22,8 @@ class Settings:
     puck_damping: float = 0.4
     max_puck_speed: float = 3.0
     mallet_speed_limit: float = 1.2
+    hsv_left_range: dict[str, list[int]] | None = None
+    hsv_right_range: dict[str, list[int]] | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -38,6 +40,8 @@ class Settings:
             "puck_damping": self.puck_damping,
             "max_puck_speed": self.max_puck_speed,
             "mallet_speed_limit": self.mallet_speed_limit,
+            "hsv_left_range": self.hsv_left_range,
+            "hsv_right_range": self.hsv_right_range,
         }
 
     @classmethod
@@ -56,4 +60,6 @@ class Settings:
             puck_damping=float(data.get("puck_damping", 0.4)),
             max_puck_speed=float(data.get("max_puck_speed", 3.0)),
             mallet_speed_limit=float(data.get("mallet_speed_limit", 1.2)),
+            hsv_left_range=data.get("hsv_left_range"),
+            hsv_right_range=data.get("hsv_right_range"),
         )

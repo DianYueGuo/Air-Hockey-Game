@@ -27,6 +27,16 @@ class DetectionResult:
     contour_area: float
 
 
+def resolve_hsv_range(
+    preset_name: str, custom_range: dict[str, list[int]] | None
+) -> HsvRange:
+    if custom_range and "lower" in custom_range and "upper" in custom_range:
+        lower = tuple(int(x) for x in custom_range["lower"])
+        upper = tuple(int(x) for x in custom_range["upper"])
+        return HsvRange(lower=lower, upper=upper)
+    return HSV_PRESETS.get(preset_name, HSV_PRESETS["orange"])
+
+
 def detect_largest_ball(frame: np.ndarray, hsv_range: HsvRange) -> DetectionResult:
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, np.array(hsv_range.lower), np.array(hsv_range.upper))

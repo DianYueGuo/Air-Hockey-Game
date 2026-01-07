@@ -8,6 +8,7 @@ import pygame
 
 from air_hockey.config.io import load_settings, save_settings
 from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode
+from air_hockey.engine.vision import HSV_PRESETS
 from air_hockey.ui.widgets import Button
 
 
@@ -21,6 +22,7 @@ class SettingsScreen:
         self.settings = load_settings()
         self.message = ""
         self.mode = "main"
+        self.vision_player = "left"
         self.back_button = Button(
             rect=pygame.Rect(40, window_size[1] - 80, 140, 44),
             label="Back",
@@ -41,6 +43,18 @@ class SettingsScreen:
             label="Back to Settings",
             on_click=self._enter_main,
             font=self.font,
+        )
+        self.vision_player_button = Button(
+            rect=pygame.Rect(60, 520, 200, 40),
+            label="Player: LEFT",
+            on_click=self._toggle_vision_player,
+            font=self.small_font,
+        )
+        self.vision_reset_button = Button(
+            rect=pygame.Rect(window_size[0] - 260, 520, 200, 40),
+            label="Reset HSV",
+            on_click=self._reset_hsv,
+            font=self.small_font,
         )
 
     def _build_main_buttons(self) -> list[Button]:
@@ -114,23 +128,32 @@ class SettingsScreen:
         button_height = 40
         left_x = self.window_size[0] // 2 - 140
         right_x = self.window_size[0] // 2 + 20
-        y = 220
-        buttons.append(
-            Button(
-                rect=pygame.Rect(left_x, y, button_width, button_height),
-                label="-",
-                on_click=self._dec_smoothing,
-                font=self.font,
+        start_y = 200
+
+        def add_row(index: int, on_minus: Callable[[], None], on_plus: Callable[[], None]) -> None:
+            y = start_y + index * 52
+            buttons.append(
+                Button(
+                    rect=pygame.Rect(left_x, y, button_width, button_height),
+                    label="-",
+                    on_click=on_minus,
+                    font=self.font,
+                )
             )
-        )
-        buttons.append(
-            Button(
-                rect=pygame.Rect(right_x, y, button_width, button_height),
-                label="+",
-                on_click=self._inc_smoothing,
-                font=self.font,
+            buttons.append(
+                Button(
+                    rect=pygame.Rect(right_x, y, button_width, button_height),
+                    label="+",
+                    on_click=on_plus,
+                    font=self.font,
+                )
             )
-        )
+
+        add_row(0, self._dec_smoothing, self._inc_smoothing)
+        add_row(1, self._dec_hue_min, self._inc_hue_min)
+        add_row(2, self._dec_hue_max, self._inc_hue_max)
+        add_row(3, self._dec_sat_min, self._inc_sat_min)
+        add_row(4, self._dec_val_min, self._inc_val_min)
         return buttons
 
     def _exit(self) -> None:
@@ -245,6 +268,77 @@ class SettingsScreen:
         self.settings.smoothing = self._clamp(self.settings.smoothing - 0.05, 0.0, 1.0)
         self.message = "Vision updated. Re-enter Play."
 
+    def _toggle_vision_player(self) -> None:
+        self.vision_player = "right" if self.vision_player == "left" else "left"
+        self.message = f"Editing {self.vision_player} player."
+
+    def _reset_hsv(self) -> None:
+        if self.vision_player == "left":
+            preset = HSV_PRESETS[self.settings.hsv_left]
+            self.settings.hsv_left_range = {
+                "lower": list(preset.lower),
+                "upper": list(preset.upper),
+            }
+        else:
+            preset = HSV_PRESETS[self.settings.hsv_right]
+            self.settings.hsv_right_range = {
+                "lower": list(preset.lower),
+                "upper": list(preset.upper),
+            }
+        self.message = "HSV reset to preset."
+
+    def _current_hsv_range(self) -> dict[str, list[int]]:
+        if self.vision_player == "left":
+            current = self.settings.hsv_left_range
+            preset = HSV_PRESETS[self.settings.hsv_left]
+        else:
+            current = self.settings.hsv_right_range
+            preset = HSV_PRESETS[self.settings.hsv_right]
+        if not current:
+            current = {"lower": list(preset.lower), "upper": list(preset.upper)}
+        return current
+
+    def _save_hsv_range(self, data: dict[str, list[int]]) -> None:
+        if self.vision_player == "left":
+            self.settings.hsv_left_range = data
+        else:
+            self.settings.hsv_right_range = data
+
+    def _adjust_hsv(self, index: int, delta: int, upper: bool = False) -> None:
+        data = self._current_hsv_range()
+        key = "upper" if upper else "lower"
+        values = data[key]
+        values[index] = self._clamp_int(values[index] + delta, 0, 255)
+        if index == 0:
+            values[index] = self._clamp_int(values[index], 0, 179)
+        data[key] = values
+        self._save_hsv_range(data)
+        self.message = "Vision updated. Re-enter Play."
+
+    def _inc_hue_min(self) -> None:
+        self._adjust_hsv(0, 1, upper=False)
+
+    def _dec_hue_min(self) -> None:
+        self._adjust_hsv(0, -1, upper=False)
+
+    def _inc_hue_max(self) -> None:
+        self._adjust_hsv(0, 1, upper=True)
+
+    def _dec_hue_max(self) -> None:
+        self._adjust_hsv(0, -1, upper=True)
+
+    def _inc_sat_min(self) -> None:
+        self._adjust_hsv(1, 5, upper=False)
+
+    def _dec_sat_min(self) -> None:
+        self._adjust_hsv(1, -5, upper=False)
+
+    def _inc_val_min(self) -> None:
+        self._adjust_hsv(2, 5, upper=False)
+
+    def _dec_val_min(self) -> None:
+        self._adjust_hsv(2, -5, upper=False)
+
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
@@ -265,6 +359,8 @@ class SettingsScreen:
             for button in self.vision_buttons:
                 button.handle_event(event)
             self.vision_back_button.handle_event(event)
+            self.vision_player_button.handle_event(event)
+            self.vision_reset_button.handle_event(event)
 
     def update(self, dt: float) -> None:
         pass
@@ -299,12 +395,15 @@ class SettingsScreen:
             self.physics_back_button.draw(surface)
         else:
             self._draw_vision_values(surface)
+            self.vision_player_button.label = f"Player: {self.vision_player.upper()}"
             for button in self.vision_buttons:
                 button.draw(surface)
             if self.message:
                 msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
                 msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 380))
                 surface.blit(msg_surf, msg_rect)
+            self.vision_player_button.draw(surface)
+            self.vision_reset_button.draw(surface)
             self.vision_back_button.draw(surface)
 
         self.back_button.draw(surface)
@@ -339,10 +438,24 @@ class SettingsScreen:
             surface.blit(surf, rect)
 
     def _draw_vision_values(self, surface: pygame.Surface) -> None:
-        line = f"Smoothing: {self.settings.smoothing:.2f}"
-        surf = self.small_font.render(line, True, (200, 210, 220))
-        rect = surf.get_rect(center=(self.window_size[0] // 2, 180))
-        surface.blit(surf, rect)
+        data = self._current_hsv_range()
+        lines = [
+            f"Smoothing: {self.settings.smoothing:.2f}",
+            f"Player: {self.vision_player.upper()}",
+            f"Hue Min: {data['lower'][0]}",
+            f"Hue Max: {data['upper'][0]}",
+            f"Sat Min: {data['lower'][1]}",
+            f"Val Min: {data['lower'][2]}",
+        ]
+        start_y = 160
+        for index, line in enumerate(lines):
+            surf = self.small_font.render(line, True, (200, 210, 220))
+            rect = surf.get_rect(center=(self.window_size[0] // 2, start_y + index * 22))
+            surface.blit(surf, rect)
+
+    @staticmethod
+    def _clamp_int(value: int, min_value: int, max_value: int) -> int:
+        return max(min_value, min(max_value, value))
 
     @staticmethod
     def _clamp(value: float, min_value: float, max_value: float) -> float:

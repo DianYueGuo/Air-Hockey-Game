@@ -11,7 +11,7 @@ import pygame
 from air_hockey.config.io import load_calibration, load_settings
 from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.camera import CameraCapture
-from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
+from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball, resolve_hsv_range
 from air_hockey.engine.physics import PhysicsWorld
 from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode, WindowOptions
 from air_hockey.game.entities import MalletSpec
@@ -49,8 +49,8 @@ class PlayScreen:
             fullscreen=settings.fullscreen,
             display_index=settings.display_index,
         )
-        self.hsv_left = HSV_PRESETS.get(settings.hsv_left, HSV_PRESETS["orange"])
-        self.hsv_right = HSV_PRESETS.get(settings.hsv_right, HSV_PRESETS["tennis"])
+        self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
+        self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
         self.last_detection_left: tuple[int, int] | None = None
         self.last_detection_right: tuple[int, int] | None = None
         self.use_camera_control = True
