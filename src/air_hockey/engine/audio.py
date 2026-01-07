@@ -27,7 +27,8 @@ class AudioManager:
         if sound_dir is not None:
             self.sound_dir = sound_dir
         else:
-            self.sound_dir = DEFAULT_SOUND_DIR.parent / sound_pack
+            candidate = DEFAULT_SOUND_DIR.parent / sound_pack
+            self.sound_dir = candidate if candidate.exists() else DEFAULT_SOUND_DIR
         self._movement_channel: Optional[pygame.mixer.Channel] = None
         try:
             if not pygame.mixer.get_init():

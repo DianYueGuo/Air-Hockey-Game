@@ -179,7 +179,8 @@ class SettingsScreen:
         self.message = "Fullscreen toggled. Restart app to apply."
 
     def _cycle_display(self) -> None:
-        self.settings.display_index = (self.settings.display_index + 1) % 3
+        display_count = pygame.display.get_num_displays() or 1
+        self.settings.display_index = (self.settings.display_index + 1) % display_count
         self.message = "Display index updated. Restart app to apply."
 
     def _swap_hsv_presets(self) -> None:
