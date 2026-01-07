@@ -38,6 +38,12 @@ class SettingsScreen:
             on_click=self._toggle_scoreboard,
             font=self.font,
         )
+        self.toggle_theme_button = Button(
+            rect=pygame.Rect(80, 340, 320, 44),
+            label="Theme: DEFAULT",
+            on_click=self._toggle_theme,
+            font=self.font,
+        )
 
     def _exit(self) -> None:
         save_settings(self.settings)
@@ -60,6 +66,10 @@ class SettingsScreen:
             self.settings.scoreboard_mode = ScoreboardMode.HUD
         self.message = "Scoreboard mode updated."
 
+    def _toggle_theme(self) -> None:
+        self.settings.theme = "retro" if self.settings.theme == "default" else "default"
+        self.message = "Theme updated."
+
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self._exit()
@@ -67,6 +77,7 @@ class SettingsScreen:
         self.back_button.handle_event(event)
         self.toggle_webcam_button.handle_event(event)
         self.toggle_scoreboard_button.handle_event(event)
+        self.toggle_theme_button.handle_event(event)
 
     def update(self, dt: float) -> None:
         pass
@@ -80,6 +91,7 @@ class SettingsScreen:
         self._refresh_labels()
         self.toggle_webcam_button.draw(surface)
         self.toggle_scoreboard_button.draw(surface)
+        self.toggle_theme_button.draw(surface)
 
         if self.message:
             msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
@@ -95,3 +107,4 @@ class SettingsScreen:
         self.toggle_scoreboard_button.label = (
             f"Scoreboard: {self.settings.scoreboard_mode.value.upper()}"
         )
+        self.toggle_theme_button.label = f"Theme: {self.settings.theme.upper()}"
