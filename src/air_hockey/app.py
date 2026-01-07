@@ -92,6 +92,7 @@ class App:
     def _show_pause(self) -> None:
         if self.play_screen is None:
             return
+        background = self.screen.copy()
         self.manager.current = PauseScreen(
             window_size=self.window_size,
             on_continue=self._resume_play,
@@ -99,6 +100,7 @@ class App:
             on_calibration=self._show_calibration_from_pause,
             on_restart=self._restart_play,
             on_quit=self._quit_to_menu,
+            background=background,
         )
 
     def _resume_play(self) -> None:

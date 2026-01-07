@@ -18,6 +18,7 @@ class PauseScreen:
         on_calibration: Callable[[], None],
         on_restart: Callable[[], None],
         on_quit: Callable[[], None],
+        background: pygame.Surface | None = None,
     ) -> None:
         self.window_size = window_size
         self.on_continue = on_continue
@@ -25,6 +26,7 @@ class PauseScreen:
         self.on_calibration = on_calibration
         self.on_restart = on_restart
         self.on_quit = on_quit
+        self.background = background
         self.font = pygame.font.SysFont("arial", 28)
         self.title_font = pygame.font.SysFont("arial", 40, bold=True)
         self.buttons = self._build_buttons()
@@ -66,7 +68,13 @@ class PauseScreen:
         pass
 
     def render(self, surface: pygame.Surface) -> None:
-        surface.fill((12, 18, 26))
+        if self.background:
+            surface.blit(self.background, (0, 0))
+            overlay = pygame.Surface(self.window_size, pygame.SRCALPHA)
+            overlay.fill((10, 12, 18, 180))
+            surface.blit(overlay, (0, 0))
+        else:
+            surface.fill((12, 18, 26))
         title_surf = self.title_font.render("Paused", True, (235, 240, 245))
         title_rect = title_surf.get_rect(center=(self.window_size[0] // 2, 120))
         surface.blit(title_surf, title_rect)
