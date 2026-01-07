@@ -57,17 +57,19 @@ class HandTracker:
 
         left_pos = None
         right_pos = None
-        if results.multi_hand_landmarks and results.multi_handedness:
-            for landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-                label = handedness.classification[0].label.lower()
+        if results.multi_hand_landmarks:
+            centers: list[tuple[int, int]] = []
+            for landmarks in results.multi_hand_landmarks:
                 cx, cy = self._palm_center(landmarks, frame.shape[1], frame.shape[0])
                 if scale < 1.0:
                     cx = int(cx / scale)
                     cy = int(cy / scale)
-                if label == "left" and left_pos is None:
-                    left_pos = (cx, cy)
-                elif label == "right" and right_pos is None:
-                    right_pos = (cx, cy)
+                centers.append((cx, cy))
+            if centers:
+                centers.sort(key=lambda item: item[0])
+                left_pos = centers[0]
+                if len(centers) > 1:
+                    right_pos = centers[-1]
         self._last_positions = HandPositions(left=left_pos, right=right_pos)
         return self._last_positions
 
