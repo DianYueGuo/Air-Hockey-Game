@@ -128,10 +128,10 @@ class SettingsScreen:
         button_height = 40
         left_x = self.window_size[0] // 2 - 140
         right_x = self.window_size[0] // 2 + 20
-        start_y = 200
+        start_y = 180
 
         def add_row(index: int, on_minus: Callable[[], None], on_plus: Callable[[], None]) -> None:
-            y = start_y + index * 52
+            y = start_y + index * 44
             buttons.append(
                 Button(
                     rect=pygame.Rect(left_x, y, button_width, button_height),
@@ -153,7 +153,9 @@ class SettingsScreen:
         add_row(1, self._dec_hue_min, self._inc_hue_min)
         add_row(2, self._dec_hue_max, self._inc_hue_max)
         add_row(3, self._dec_sat_min, self._inc_sat_min)
-        add_row(4, self._dec_val_min, self._inc_val_min)
+        add_row(4, self._dec_sat_max, self._inc_sat_max)
+        add_row(5, self._dec_val_min, self._inc_val_min)
+        add_row(6, self._dec_val_max, self._inc_val_max)
         return buttons
 
     def _exit(self) -> None:
@@ -333,11 +335,23 @@ class SettingsScreen:
     def _dec_sat_min(self) -> None:
         self._adjust_hsv(1, -5, upper=False)
 
+    def _inc_sat_max(self) -> None:
+        self._adjust_hsv(1, 5, upper=True)
+
+    def _dec_sat_max(self) -> None:
+        self._adjust_hsv(1, -5, upper=True)
+
     def _inc_val_min(self) -> None:
         self._adjust_hsv(2, 5, upper=False)
 
     def _dec_val_min(self) -> None:
         self._adjust_hsv(2, -5, upper=False)
+
+    def _inc_val_max(self) -> None:
+        self._adjust_hsv(2, 5, upper=True)
+
+    def _dec_val_max(self) -> None:
+        self._adjust_hsv(2, -5, upper=True)
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
@@ -445,9 +459,11 @@ class SettingsScreen:
             f"Hue Min: {data['lower'][0]}",
             f"Hue Max: {data['upper'][0]}",
             f"Sat Min: {data['lower'][1]}",
+            f"Sat Max: {data['upper'][1]}",
             f"Val Min: {data['lower'][2]}",
+            f"Val Max: {data['upper'][2]}",
         ]
-        start_y = 160
+        start_y = 130
         for index, line in enumerate(lines):
             surf = self.small_font.render(line, True, (200, 210, 220))
             rect = surf.get_rect(center=(self.window_size[0] // 2, start_y + index * 22))
