@@ -151,9 +151,28 @@ class PhysicsWorld:
             puck.fixtures[0].restitution = restitution
 
     def set_mallet_positions(
-        self, left_pos: tuple[float, float], right_pos: tuple[float, float]
+        self,
+        left_pos: tuple[float, float],
+        right_pos: tuple[float, float],
+        time_step: float,
+        teleport: bool = False,
     ) -> None:
-        self.entities.mallet_left.linearVelocity = (0.0, 0.0)
-        self.entities.mallet_right.linearVelocity = (0.0, 0.0)
-        self.entities.mallet_left.position = left_pos
-        self.entities.mallet_right.position = right_pos
+        if teleport:
+            self.entities.mallet_left.linearVelocity = (0.0, 0.0)
+            self.entities.mallet_right.linearVelocity = (0.0, 0.0)
+            self.entities.mallet_left.position = left_pos
+            self.entities.mallet_right.position = right_pos
+            return
+
+        left_body = self.entities.mallet_left
+        right_body = self.entities.mallet_right
+        left_vel = (
+            (left_pos[0] - left_body.position[0]) / time_step,
+            (left_pos[1] - left_body.position[1]) / time_step,
+        )
+        right_vel = (
+            (right_pos[0] - right_body.position[0]) / time_step,
+            (right_pos[1] - right_body.position[1]) / time_step,
+        )
+        left_body.linearVelocity = left_vel
+        right_body.linearVelocity = right_vel

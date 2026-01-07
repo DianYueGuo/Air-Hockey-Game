@@ -244,7 +244,7 @@ class PlayScreen:
         self.physics.entities.puck.linearVelocity = (0.0, 0.0)
         left_pos = (-self.field.width * 0.25, 0.0)
         right_pos = (self.field.width * 0.25, 0.0)
-        self.physics.set_mallet_positions(left_pos, right_pos)
+        self.physics.set_mallet_positions(left_pos, right_pos, time_step=dt)
         self.trail_positions.clear()
 
     def _update_trail(self) -> None:
@@ -392,7 +392,7 @@ class PlayScreen:
                 left_pos = left_cam
             if right_cam is not None:
                 right_pos = right_cam
-        self.physics.set_mallet_positions(left_pos, right_pos)
+        self.physics.set_mallet_positions(left_pos, right_pos, time_step=self.fixed_time_step, teleport=True)
 
     def _move_mallet(
         self,
