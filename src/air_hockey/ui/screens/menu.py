@@ -27,9 +27,10 @@ class MenuScreen:
         self.on_settings = on_settings
         self.on_calibration = on_calibration
         self.on_quit = on_quit
-        self.buttons = self._build_buttons()
+        self.layout = self._build_layout()
+        self.buttons = self.layout["buttons"]
 
-    def _build_buttons(self) -> list[Button]:
+    def _build_layout(self) -> dict[str, object]:
         labels: list[tuple[str, Callable[[], None]]] = [
             ("Play", self._on_play),
             ("Settings", self._on_settings),
@@ -40,7 +41,11 @@ class MenuScreen:
         button_height = 52
         spacing = 16
         total_height = len(labels) * button_height + (len(labels) - 1) * spacing
-        start_y = (self.window_size[1] - total_height) // 2 + 40
+        title_surf = self.title_font.render("Air Hockey", True, (235, 240, 245))
+        title_height = title_surf.get_height()
+        title_gap = 28
+        group_height = title_height + title_gap + total_height
+        start_y = (self.window_size[1] - group_height) // 2 + title_height + title_gap
         start_x = (self.window_size[0] - button_width) // 2
 
         buttons: list[Button] = []
@@ -52,7 +57,12 @@ class MenuScreen:
                 button_height,
             )
             buttons.append(Button(rect=rect, label=label, on_click=handler, font=self.font))
-        return buttons
+        return {
+            "buttons": buttons,
+            "title_height": title_height,
+            "title_gap": title_gap,
+            "group_height": group_height,
+        }
 
     def _set_message(self, text: str) -> None:
         self.message = text
@@ -91,7 +101,10 @@ class MenuScreen:
     def render(self, surface: pygame.Surface) -> None:
         surface.fill((15, 20, 30))
         title_surf = self.title_font.render("Air Hockey", True, (235, 240, 245))
-        title_rect = title_surf.get_rect(center=(self.window_size[0] // 2, 120))
+        group_top = (self.window_size[1] - self.layout["group_height"]) // 2
+        title_rect = title_surf.get_rect(
+            center=(self.window_size[0] // 2, group_top + self.layout["title_height"] // 2)
+        )
         surface.blit(title_surf, title_rect)
 
         for button in self.buttons:
@@ -99,5 +112,7 @@ class MenuScreen:
 
         if self.message:
             message_surf = self.font.render(self.message, True, (200, 210, 220))
-            message_rect = message_surf.get_rect(center=(self.window_size[0] // 2, 420))
+            message_rect = message_surf.get_rect(
+                center=(self.window_size[0] // 2, self.window_size[1] - 60)
+            )
             surface.blit(message_surf, message_rect)
