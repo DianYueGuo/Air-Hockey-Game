@@ -63,6 +63,7 @@ class PhysicsWorld:
         max_puck_speed: float | None = None,
     ) -> None:
         self.field = field
+        b2.velocityThreshold = 0.0
         self.world = b2.world(gravity=(0.0, 0.0), doSleep=True)
         self.world.contactListener = ContactListener(
             on_puck_wall=on_puck_wall, on_puck_mallet=on_puck_mallet
@@ -87,9 +88,11 @@ class PhysicsWorld:
         side_wall_half = max(0.0, half_height - goal_half) / 2
 
         def add_wall(center_x: float, center_y: float, half_w: float, half_h: float) -> None:
-            body = self.world.CreateStaticBody(
-                position=(center_x, center_y),
-                shapes=b2.polygonShape(box=(half_w, half_h)),
+            body = self.world.CreateStaticBody(position=(center_x, center_y))
+            body.CreatePolygonFixture(
+                box=(half_w, half_h),
+                friction=0.0,
+                restitution=1.0,
             )
             body.userData = "wall"
 
