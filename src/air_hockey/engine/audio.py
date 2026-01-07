@@ -33,17 +33,19 @@ class AudioManager:
         try:
             if not pygame.mixer.get_init():
                 pygame.mixer.init()
-        except pygame.error:
+        except (pygame.error, NotImplementedError, AttributeError):
             self.enabled = False
         self.sounds = self._load_sounds()
 
     def _load_sound(self, filename: str) -> Optional[pygame.mixer.Sound]:
+        if not self.enabled:
+            return None
         path = self.sound_dir / filename
         if not path.exists():
             return None
         try:
             return pygame.mixer.Sound(path.as_posix())
-        except pygame.error:
+        except (pygame.error, NotImplementedError, AttributeError):
             return None
 
     def _load_sounds(self) -> SoundPack:
