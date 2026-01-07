@@ -13,7 +13,7 @@ dependencies = [
   "opencv-python",
   "box2d-py",
   "numpy",
-  "mediapipe",
+  "mediapipe==0.10.14; python_version < '3.13'",
 ]
 
 [project.optional-dependencies]
