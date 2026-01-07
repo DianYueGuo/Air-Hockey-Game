@@ -7,6 +7,7 @@ from typing import Protocol
 
 import pygame
 
+from air_hockey.config.io import load_settings
 from air_hockey.ui.screens.calibration import CalibrationScreen
 from air_hockey.ui.screens.menu import MenuScreen
 from air_hockey.ui.screens.pause import PauseScreen
@@ -53,7 +54,13 @@ class PlaceholderScreen:
 
 class App:
     def __init__(self, window_size: tuple[int, int]) -> None:
-        self.window_options = WindowOptions()
+        settings = load_settings()
+        self.window_options = WindowOptions(
+            webcam_view_mode=settings.webcam_view_mode,
+            scoreboard_mode=settings.scoreboard_mode,
+            fullscreen=settings.fullscreen,
+            display_index=settings.display_index,
+        )
         self.window_size = self._resolve_window_size(window_size)
         self.screen = self._create_window(self.window_size)
         self.clock = pygame.time.Clock()
