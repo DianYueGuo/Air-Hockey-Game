@@ -1,0 +1,8 @@
+pygame
+opencv-python
+box2d-py
+numpy
+
+[dev]
+pyinstaller
+pytest
