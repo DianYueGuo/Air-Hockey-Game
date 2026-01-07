@@ -355,17 +355,16 @@ class PlayScreen:
     ) -> None:
         if frame_width <= 0 or frame_height <= 0:
             return
-        mid_x = frame_width // 2
         if self.last_detection_left:
-            x_norm = self.last_detection_left[0] / max(1, mid_x)
+            x_norm = self.last_detection_left[0] / max(1, frame_width)
             y_norm = self.last_detection_left[1] / max(1, frame_height)
-            x_pos = overlay_rect.left + int(x_norm * (overlay_rect.width / 2))
+            x_pos = overlay_rect.left + int(x_norm * overlay_rect.width)
             y_pos = overlay_rect.top + int(y_norm * overlay_rect.height)
             pygame.draw.circle(surface, (255, 190, 80), (x_pos, y_pos), 6, width=2)
         if self.last_detection_right:
-            x_norm = self.last_detection_right[0] / max(1, mid_x)
+            x_norm = self.last_detection_right[0] / max(1, frame_width)
             y_norm = self.last_detection_right[1] / max(1, frame_height)
-            x_pos = overlay_rect.left + int(overlay_rect.width / 2 + x_norm * (overlay_rect.width / 2))
+            x_pos = overlay_rect.left + int(x_norm * overlay_rect.width)
             y_pos = overlay_rect.top + int(y_norm * overlay_rect.height)
             pygame.draw.circle(surface, (160, 220, 120), (x_pos, y_pos), 6, width=2)
 
@@ -475,8 +474,9 @@ class PlayScreen:
         else:
             calib = self.calibration.right
 
+        x_value = detection[0] if left else detection[0] - half_width_px
         x_norm = self._normalize_axis(
-            detection[0],
+            x_value,
             calib.cam_x_min,
             calib.cam_x_max,
             0.0,
