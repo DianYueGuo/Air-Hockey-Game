@@ -5,12 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+import cv2
 import pygame
 
 from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.camera import CameraCapture
 from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
 from air_hockey.engine.physics import PhysicsWorld
+from air_hockey.engine.windowing import WebcamViewMode, WindowOptions
 from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
 from air_hockey.ui.screens.hud import Hud
@@ -31,6 +33,7 @@ class PlayScreen:
         self.audio = AudioManager()
         self.camera = CameraCapture()
         self.camera_active = self.camera.start()
+        self.window_options = WindowOptions(webcam_view_mode=WebcamViewMode.OVERLAY)
         self.hsv_left = HSV_PRESETS["orange"]
         self.hsv_right = HSV_PRESETS["tennis"]
         self.last_detection_left: tuple[int, int] | None = None
@@ -63,6 +66,8 @@ class PlayScreen:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             if self.camera_active:
                 self.camera.stop()
+            if self.window_options.webcam_view_mode == WebcamViewMode.WINDOW:
+                cv2.destroyWindow("Air Hockey Camera")
             self.on_back()
 
     def update(self, dt: float) -> None:
@@ -84,6 +89,7 @@ class PlayScreen:
         self._draw_table(surface)
         self._draw_entities(surface)
         self.hud.render_score(surface, self.score_left, self.score_right)
+        self._draw_webcam_overlay(surface)
         hint = self.font.render("ESC to return to menu", True, (180, 190, 205))
         surface.blit(hint, (16, 16))
 
@@ -184,6 +190,15 @@ class PlayScreen:
 
         self.last_detection_left = left_result.center
         self.last_detection_right = right_result.center
+        if self.window_options.webcam_view_mode == WebcamViewMode.WINDOW:
+            preview = frame.frame.copy()
+            if self.last_detection_left:
+                cv2.circle(preview, self.last_detection_left, 8, (0, 200, 255), 2)
+            if self.last_detection_right:
+                right_pos = (self.last_detection_right[0] + mid_x, self.last_detection_right[1])
+                cv2.circle(preview, right_pos, 8, (120, 255, 120), 2)
+            cv2.imshow("Air Hockey Camera", preview)
+            cv2.waitKey(1)
 
     def _draw_detection_marker(self, surface: pygame.Surface) -> None:
         frame = self.camera.get_latest()
@@ -203,6 +218,24 @@ class PlayScreen:
                 self.last_detection_right, frame_height, mid_x, left=False
             )
             self._draw_circle(surface, world_pos, 0.03, (160, 220, 120))
+
+    def _draw_webcam_overlay(self, surface: pygame.Surface) -> None:
+        if self.window_options.webcam_view_mode != WebcamViewMode.OVERLAY:
+            return
+        frame = self.camera.get_latest()
+        if frame is None:
+            return
+        frame_bgr = frame.frame
+        frame_rgb = frame_bgr[:, :, ::-1]
+        overlay_width = 240
+        overlay_height = int(overlay_width * frame_rgb.shape[0] / frame_rgb.shape[1])
+        overlay = pygame.transform.smoothscale(
+            pygame.surfarray.make_surface(frame_rgb.swapaxes(0, 1)),
+            (overlay_width, overlay_height),
+        )
+        overlay_rect = overlay.get_rect()
+        overlay_rect.midbottom = (self.window_size[0] // 2, self.window_size[1] - 10)
+        surface.blit(overlay, overlay_rect)
 
     def _update_mallets(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
         left_pos = self._move_mallet(
