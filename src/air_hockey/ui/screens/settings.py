@@ -249,9 +249,9 @@ class SettingsScreen:
     def _reset_physics(self) -> None:
         self.settings.puck_restitution = 1.0
         self.settings.puck_damping = 0.0
-        self.settings.max_puck_speed = 8.0
+        self.settings.max_puck_speed = 0.0
         self.settings.mallet_speed_limit = 2.0
-        self.message = "Physics reset. Re-enter Play."
+        self.message = "Physics reset (no speed clamp). Re-enter Play."
 
     def _inc_smoothing(self) -> None:
         self.settings.smoothing = self._clamp(self.settings.smoothing + 0.05, 0.0, 1.0)

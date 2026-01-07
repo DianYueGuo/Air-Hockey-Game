@@ -154,9 +154,9 @@ class PhysicsWorld:
     def update_puck_settings(
         self, restitution: float, damping: float, max_speed: float
     ) -> None:
-        self.max_puck_speed = max_speed
+        self.max_puck_speed = None if max_speed <= 0 else max_speed
         puck = self.entities.puck
-        puck.linearDamping = damping
+        puck.linearDamping = max(0.0, damping)
         if puck.fixtures:
             puck.fixtures[0].restitution = restitution
 
