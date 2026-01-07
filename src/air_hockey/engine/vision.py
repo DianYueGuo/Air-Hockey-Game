@@ -37,22 +37,27 @@ def resolve_hsv_range(
     return HSV_PRESETS.get(preset_name, HSV_PRESETS["orange"])
 
 
-def detect_largest_ball(frame: np.ndarray, hsv_range: HsvRange) -> DetectionResult:
+def detect_largest_ball(
+    frame: np.ndarray, hsv_range: HsvRange, min_area: float = 0.0
+) -> DetectionResult:
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, np.array(hsv_range.lower), np.array(hsv_range.upper))
-    return _detect_from_mask(mask)
+    return _detect_from_mask(mask, min_area=min_area)
 
 
 def detect_largest_ball_masked(
-    frame: np.ndarray, hsv_range: HsvRange, motion_mask: np.ndarray
+    frame: np.ndarray,
+    hsv_range: HsvRange,
+    motion_mask: np.ndarray,
+    min_area: float = 0.0,
 ) -> DetectionResult:
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     color_mask = cv2.inRange(hsv, np.array(hsv_range.lower), np.array(hsv_range.upper))
     combined = cv2.bitwise_and(color_mask, motion_mask)
-    return _detect_from_mask(combined)
+    return _detect_from_mask(combined, min_area=min_area)
 
 
-def _detect_from_mask(mask: np.ndarray) -> DetectionResult:
+def _detect_from_mask(mask: np.ndarray, min_area: float = 0.0) -> DetectionResult:
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
@@ -62,7 +67,7 @@ def _detect_from_mask(mask: np.ndarray) -> DetectionResult:
 
     largest = max(contours, key=cv2.contourArea)
     area = cv2.contourArea(largest)
-    if area <= 0:
+    if area <= min_area:
         return DetectionResult(center=None, contour_area=area)
 
     moments = cv2.moments(largest)

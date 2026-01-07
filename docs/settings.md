@@ -17,6 +17,7 @@ Settings are stored per user and apply when entering Play or resuming from Pause
 ## Vision Tuning
 - **Smoothing:** Exponential smoothing factor for camera tracking (0.0 = raw, 1.0 = heavy smoothing).
 - **HSV ranges:** Adjust hue min/max plus saturation/value min/max per player. Use Reset HSV to restore defaults.
+- **Advanced (config-only):** detection scale, minimum contour area, and max jump threshold are stored in settings but not exposed in the UI.
 
 ## Physics Tuning
 - **Puck Restitution:** Bounciness of the puck.
