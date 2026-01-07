@@ -7,6 +7,7 @@ from typing import Callable
 
 import pygame
 
+from air_hockey.config.io import save_calibration
 from air_hockey.engine.calibration import CalibrationData, PlayerCalibration
 from air_hockey.engine.camera import CameraCapture
 from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
@@ -151,6 +152,8 @@ class CalibrationScreen:
             target.set_min_y(value)
         elif step.axis == "max_y":
             target.set_max_y(value)
+
+        save_calibration(self.calibration)
 
         self.step_index += 1
         if self.step_index >= len(self.steps):

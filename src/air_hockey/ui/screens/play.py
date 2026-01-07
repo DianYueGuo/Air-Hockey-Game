@@ -8,6 +8,7 @@ from typing import Callable
 import cv2
 import pygame
 
+from air_hockey.config.io import load_calibration
 from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.camera import CameraCapture
 from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
@@ -39,6 +40,7 @@ class PlayScreen:
         self.last_detection_left: tuple[int, int] | None = None
         self.last_detection_right: tuple[int, int] | None = None
         self.use_camera_control = True
+        self.calibration = load_calibration()
         self.physics = PhysicsWorld(
             self.field,
             on_puck_wall=self.audio.play_wall,
@@ -318,8 +320,25 @@ class PlayScreen:
     def _map_detection_to_world(
         self, detection: tuple[int, int], frame_height: int, half_width_px: int, left: bool
     ) -> tuple[float, float]:
-        x_norm = detection[0] / max(1, half_width_px)
-        y_norm = detection[1] / max(1, frame_height)
+        if left:
+            calib = self.calibration.left
+        else:
+            calib = self.calibration.right
+
+        x_norm = self._normalize_axis(
+            detection[0],
+            calib.cam_x_min,
+            calib.cam_x_max,
+            0.0,
+            float(half_width_px),
+        )
+        y_norm = self._normalize_axis(
+            detection[1],
+            calib.cam_y_min,
+            calib.cam_y_max,
+            0.0,
+            float(frame_height),
+        )
         half_width = self.field.width / 2.0
         half_height = self.field.height / 2.0
         if left:
@@ -328,6 +347,20 @@ class PlayScreen:
             world_x = 0.0 + x_norm * half_width
         world_y = (-half_height) + y_norm * self.field.height
         return self._clamp_mallet_position((world_x, world_y), left=left)
+
+    @staticmethod
+    def _normalize_axis(
+        value: float,
+        min_val: float | None,
+        max_val: float | None,
+        fallback_min: float,
+        fallback_max: float,
+    ) -> float:
+        if min_val is None or max_val is None or max_val == min_val:
+            min_val = fallback_min
+            max_val = fallback_max
+        norm = (value - min_val) / (max_val - min_val)
+        return max(0.0, min(1.0, norm))
 
     def _draw_circle(
         self, surface: pygame.Surface, position: tuple[float, float], radius: float, color: tuple[int, int, int]

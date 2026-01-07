@@ -1,0 +1,16 @@
+{
+  "calibration": {
+    "left": {
+      "cam_x_min": null,
+      "cam_x_max": null,
+      "cam_y_min": null,
+      "cam_y_max": null
+    },
+    "right": {
+      "cam_x_min": null,
+      "cam_x_max": null,
+      "cam_y_min": null,
+      "cam_y_max": null
+    }
+  }
+}
