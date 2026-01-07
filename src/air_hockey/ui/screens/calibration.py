@@ -217,14 +217,13 @@ class CalibrationScreen:
             return
         frame_bgr = cv2.flip(frame.frame, 1)
         frame_height, frame_width = frame_bgr.shape[:2]
-        mid_x = frame_width // 2
         if left:
-            x_norm = detection[0] / max(1, mid_x)
-            x_pos = preview_rect.left + int(x_norm * (preview_rect.width / 2))
+            x_norm = detection[0] / max(1, frame_width)
+            x_pos = preview_rect.left + int(x_norm * preview_rect.width)
             color = (255, 190, 80)
         else:
-            x_norm = detection[0] / max(1, mid_x)
-            x_pos = preview_rect.left + int(preview_rect.width / 2 + x_norm * (preview_rect.width / 2))
+            x_norm = detection[0] / max(1, frame_width)
+            x_pos = preview_rect.left + int(x_norm * preview_rect.width)
             color = (160, 220, 120)
         y_norm = detection[1] / max(1, frame_height)
         y_pos = preview_rect.top + int(y_norm * preview_rect.height)

@@ -289,10 +289,7 @@ class PlayScreen:
             if self.last_detection_left:
                 cv2.circle(preview, self.last_detection_left, 8, (0, 200, 255), 2)
             if self.last_detection_right:
-                frame_height, frame_width = frame_bgr.shape[:2]
-                mid_x = frame_width // 2
-                right_pos = (self.last_detection_right[0] + mid_x, self.last_detection_right[1])
-                cv2.circle(preview, right_pos, 8, (120, 255, 120), 2)
+                cv2.circle(preview, self.last_detection_right, 8, (120, 255, 120), 2)
             cv2.imshow("Air Hockey Camera", preview)
             cv2.waitKey(1)
 
@@ -302,17 +299,16 @@ class PlayScreen:
             return
         frame_bgr = cv2.flip(frame.frame, 1)
         frame_height, frame_width = frame_bgr.shape[:2]
-        mid_x = frame_width // 2
 
         if self.last_detection_left:
             world_pos = self._map_detection_to_world(
-                self.last_detection_left, frame_height, mid_x, left=True
+                self.last_detection_left, frame_height, frame_width, left=True
             )
             self._draw_circle(surface, world_pos, 0.03, (255, 190, 80))
 
         if self.last_detection_right:
             world_pos = self._map_detection_to_world(
-                self.last_detection_right, frame_height, mid_x, left=False
+                self.last_detection_right, frame_height, frame_width, left=False
             )
             self._draw_circle(surface, world_pos, 0.03, (160, 220, 120))
 
@@ -455,36 +451,35 @@ class PlayScreen:
         if frame is None:
             return None
         frame_height, frame_width = frame.frame.shape[:2]
-        mid_x = frame_width // 2
         if left:
             detection = self.last_detection_left
             if detection is None:
                 return self.smoothed_left
-            world_pos = self._map_detection_to_world(detection, frame_height, mid_x, left=True)
+            world_pos = self._map_detection_to_world(detection, frame_height, frame_width, left=True)
             self.smoothed_left = self._apply_smoothing(self.smoothed_left, world_pos)
             return self.smoothed_left
         detection = self.last_detection_right
         if detection is None:
             return self.smoothed_right
-        world_pos = self._map_detection_to_world(detection, frame_height, mid_x, left=False)
+        world_pos = self._map_detection_to_world(detection, frame_height, frame_width, left=False)
         self.smoothed_right = self._apply_smoothing(self.smoothed_right, world_pos)
         return self.smoothed_right
 
     def _map_detection_to_world(
-        self, detection: tuple[int, int], frame_height: int, half_width_px: int, left: bool
+        self, detection: tuple[int, int], frame_height: int, frame_width: int, left: bool
     ) -> tuple[float, float]:
         if left:
             calib = self.calibration.left
         else:
             calib = self.calibration.right
 
-        x_value = detection[0] if left else detection[0] - half_width_px
+        x_value = detection[0]
         x_norm = self._normalize_axis(
             x_value,
             calib.cam_x_min,
             calib.cam_x_max,
             0.0,
-            float(half_width_px),
+            float(frame_width),
         )
         y_norm = self._normalize_axis(
             detection[1],
