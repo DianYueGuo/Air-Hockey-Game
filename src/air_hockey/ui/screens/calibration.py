@@ -107,6 +107,8 @@ class CalibrationScreen:
             status_rect = status_surf.get_rect(center=(self.window_size[0] // 2, 240))
             surface.blit(status_surf, status_rect)
 
+        self._draw_debug_values(surface)
+
         self._draw_preview(surface)
         self.back_button.draw(surface)
         self.capture_button.draw(surface)
@@ -186,6 +188,20 @@ class CalibrationScreen:
             self._draw_detection_circle(surface, preview_rect, self.last_detection_left, left=True)
         if self.last_detection_right:
             self._draw_detection_circle(surface, preview_rect, self.last_detection_right, left=False)
+
+    def _draw_debug_values(self, surface: pygame.Surface) -> None:
+        left = self.calibration.left
+        right = self.calibration.right
+        lines = [
+            f\"Left X: {left.cam_x_min} .. {left.cam_x_max}\",
+            f\"Left Y: {left.cam_y_min} .. {left.cam_y_max}\",
+            f\"Right X: {right.cam_x_min} .. {right.cam_x_max}\",
+            f\"Right Y: {right.cam_y_min} .. {right.cam_y_max}\",
+        ]
+        start_y = 280
+        for index, line in enumerate(lines):
+            surf = self.small_font.render(line, True, (150, 165, 175))
+            surface.blit(surf, (40, start_y + index * 22))
 
     def _draw_detection_circle(
         self,
