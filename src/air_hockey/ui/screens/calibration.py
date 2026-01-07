@@ -44,8 +44,8 @@ class CalibrationScreen:
         )
         self.camera = CameraCapture()
         self.camera_active = self.camera.start()
-        self.hand_tracker = HandTracker(process_every=settings.hand_process_every)
         settings = load_settings()
+        self.hand_tracker = HandTracker(process_every=settings.hand_process_every)
         self.detection_scale = settings.detection_scale
         self.max_jump_px = settings.max_jump_px
         self.hand_process_every = settings.hand_process_every
