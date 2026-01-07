@@ -66,7 +66,7 @@ class App:
         self.clock = pygame.time.Clock()
         self.play_screen: PlayScreen | None = None
         self.menu_screen = MenuScreen(
-            window_size=window_size,
+            window_size=self.window_size,
             on_play=self._show_play,
             on_settings=self._show_settings,
             on_calibration=self._show_calibration,
