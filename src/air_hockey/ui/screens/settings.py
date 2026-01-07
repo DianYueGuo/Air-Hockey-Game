@@ -44,6 +44,24 @@ class SettingsScreen:
             on_click=self._toggle_theme,
             font=self.font,
         )
+        self.toggle_fullscreen_button = Button(
+            rect=pygame.Rect(80, 400, 320, 44),
+            label="Fullscreen: OFF",
+            on_click=self._toggle_fullscreen,
+            font=self.font,
+        )
+        self.display_button = Button(
+            rect=pygame.Rect(80, 460, 320, 44),
+            label="Display: 0",
+            on_click=self._cycle_display,
+            font=self.font,
+        )
+        self.swap_hsv_button = Button(
+            rect=pygame.Rect(80, 520, 320, 44),
+            label="Swap Colors",
+            on_click=self._swap_hsv_presets,
+            font=self.font,
+        )
 
     def _exit(self) -> None:
         save_settings(self.settings)
@@ -70,6 +88,20 @@ class SettingsScreen:
         self.settings.theme = "retro" if self.settings.theme == "default" else "default"
         self.message = "Theme updated."
 
+    def _toggle_fullscreen(self) -> None:
+        self.settings.fullscreen = not self.settings.fullscreen
+        self.message = "Fullscreen toggled. Restart app to apply."
+
+    def _cycle_display(self) -> None:
+        self.settings.display_index = (self.settings.display_index + 1) % 3
+        self.message = "Display index updated. Restart app to apply."
+
+    def _swap_hsv_presets(self) -> None:
+        left = self.settings.hsv_left
+        self.settings.hsv_left = self.settings.hsv_right
+        self.settings.hsv_right = left
+        self.message = "Player colors swapped."
+
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self._exit()
@@ -78,6 +110,9 @@ class SettingsScreen:
         self.toggle_webcam_button.handle_event(event)
         self.toggle_scoreboard_button.handle_event(event)
         self.toggle_theme_button.handle_event(event)
+        self.toggle_fullscreen_button.handle_event(event)
+        self.display_button.handle_event(event)
+        self.swap_hsv_button.handle_event(event)
 
     def update(self, dt: float) -> None:
         pass
@@ -92,6 +127,9 @@ class SettingsScreen:
         self.toggle_webcam_button.draw(surface)
         self.toggle_scoreboard_button.draw(surface)
         self.toggle_theme_button.draw(surface)
+        self.toggle_fullscreen_button.draw(surface)
+        self.display_button.draw(surface)
+        self.swap_hsv_button.draw(surface)
 
         if self.message:
             msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
@@ -108,3 +146,7 @@ class SettingsScreen:
             f"Scoreboard: {self.settings.scoreboard_mode.value.upper()}"
         )
         self.toggle_theme_button.label = f"Theme: {self.settings.theme.upper()}"
+        self.toggle_fullscreen_button.label = (
+            f"Fullscreen: {'ON' if self.settings.fullscreen else 'OFF'}"
+        )
+        self.display_button.label = f"Display: {self.settings.display_index}"
