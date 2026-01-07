@@ -125,7 +125,7 @@ class PhysicsWorld:
         return body
 
     def step(self, time_step: float) -> None:
-        self.world.Step(time_step, vel_iters=8, pos_iters=3)
+        self.world.Step(time_step, 8, 3)
         self.world.ClearForces()
         if self.max_puck_speed:
             self._clamp_puck_speed()
