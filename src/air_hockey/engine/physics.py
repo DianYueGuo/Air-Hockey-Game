@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Callable, Optional
 
 from Box2D import b2
 
@@ -17,10 +18,52 @@ class PhysicsEntities:
     mallet_right: b2.body
 
 
+class ContactListener(b2.contactListener):
+    def __init__(
+        self,
+        on_puck_wall: Optional[Callable[[], None]] = None,
+        on_puck_mallet: Optional[Callable[[], None]] = None,
+    ) -> None:
+        super().__init__()
+        self.on_puck_wall = on_puck_wall
+        self.on_puck_mallet = on_puck_mallet
+
+    def BeginContact(self, contact: b2.contact) -> None:
+        body_a = contact.fixtureA.body
+        body_b = contact.fixtureB.body
+        type_a = body_a.userData
+        type_b = body_b.userData
+
+        if self._is_puck_wall(type_a, type_b) and self.on_puck_wall:
+            self.on_puck_wall()
+        elif self._is_puck_mallet(type_a, type_b) and self.on_puck_mallet:
+            self.on_puck_mallet()
+
+    @staticmethod
+    def _is_puck_wall(type_a: object, type_b: object) -> bool:
+        return (type_a == "puck" and type_b == "wall") or (
+            type_b == "puck" and type_a == "wall"
+        )
+
+    @staticmethod
+    def _is_puck_mallet(type_a: object, type_b: object) -> bool:
+        return (type_a == "puck" and type_b == "mallet") or (
+            type_b == "puck" and type_a == "mallet"
+        )
+
+
 class PhysicsWorld:
-    def __init__(self, field: FieldSpec) -> None:
+    def __init__(
+        self,
+        field: FieldSpec,
+        on_puck_wall: Optional[Callable[[], None]] = None,
+        on_puck_mallet: Optional[Callable[[], None]] = None,
+    ) -> None:
         self.field = field
         self.world = b2.world(gravity=(0.0, 0.0), doSleep=True)
+        self.world.contactListener = ContactListener(
+            on_puck_wall=on_puck_wall, on_puck_mallet=on_puck_mallet
+        )
         self.entities = self._create_entities()
 
     def _create_entities(self) -> PhysicsEntities:
@@ -36,10 +79,11 @@ class PhysicsWorld:
         half_height = self.field.height / 2
 
         def add_wall(center_x: float, center_y: float, half_w: float, half_h: float) -> None:
-            self.world.CreateStaticBody(
+            body = self.world.CreateStaticBody(
                 position=(center_x, center_y),
                 shapes=b2.polygonShape(box=(half_w, half_h)),
             )
+            body.userData = "wall"
 
         add_wall(0.0, -half_height - thickness, half_width, thickness)
         add_wall(0.0, half_height + thickness, half_width, thickness)
@@ -56,6 +100,7 @@ class PhysicsWorld:
             restitution=spec.restitution,
         )
         body.linearDamping = spec.linear_damping
+        body.userData = "puck"
         return body
 
     def _create_mallet(self, side: str) -> b2.body:
@@ -68,6 +113,7 @@ class PhysicsWorld:
             friction=spec.friction,
             restitution=spec.restitution,
         )
+        body.userData = "mallet"
         return body
 
     def step(self, time_step: float) -> None:

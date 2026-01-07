@@ -7,6 +7,7 @@ from typing import Callable
 
 import pygame
 
+from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.physics import PhysicsWorld
 from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
@@ -25,7 +26,12 @@ class PlayScreen:
         self.on_back = on_back
         self.field = FieldSpec()
         self.mallet_spec = MalletSpec()
-        self.physics = PhysicsWorld(self.field)
+        self.audio = AudioManager()
+        self.physics = PhysicsWorld(
+            self.field,
+            on_puck_wall=self.audio.play_wall,
+            on_puck_mallet=self.audio.play_mallet,
+        )
         self.clock_accumulator = 0.0
         self.fixed_time_step = 1.0 / 120.0
         self.mallet_speed = 1.2
@@ -107,9 +113,11 @@ class PlayScreen:
         half_width = self.field.width / 2.0
         if puck.position[0] < -half_width:
             self.score_right += 1
+            self.audio.play_goal()
             self._reset_positions()
         elif puck.position[0] > half_width:
             self.score_left += 1
+            self.audio.play_goal()
             self._reset_positions()
 
     def _reset_positions(self) -> None:
