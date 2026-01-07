@@ -40,10 +40,10 @@ class PlayScreen:
         self.on_pause = on_pause
         self.field = FieldSpec()
         self.mallet_spec = MalletSpec()
+        settings = load_settings()
         self.audio = AudioManager(sound_pack=settings.sound_pack)
         self.camera = CameraCapture()
         self.camera_active = False
-        settings = load_settings()
         self.window_options = WindowOptions(
             webcam_view_mode=settings.webcam_view_mode,
             scoreboard_mode=settings.scoreboard_mode,
