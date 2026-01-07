@@ -37,6 +37,8 @@ class PlayScreen:
         self.mallet_speed = 1.2
         self.score_left = 0
         self.score_right = 0
+        self.trail_positions: list[tuple[float, float]] = []
+        self.trail_max = 12
         self.render_config = self._build_render_config()
         self.font = pygame.font.SysFont("arial", 22)
         self.hud = Hud(window_size=window_size)
@@ -60,6 +62,7 @@ class PlayScreen:
             self.physics.step(self.fixed_time_step)
             self._check_goal()
             self.clock_accumulator -= self.fixed_time_step
+            self._update_trail()
         puck_velocity = self.physics.entities.puck.linearVelocity
         speed = (puck_velocity[0] ** 2 + puck_velocity[1] ** 2) ** 0.5
         self.audio.update_puck_movement(speed)
@@ -107,6 +110,7 @@ class PlayScreen:
         mallet_left = self.physics.entities.mallet_left
         mallet_right = self.physics.entities.mallet_right
 
+        self._draw_trail(surface)
         self._draw_circle(surface, puck.position, 0.04, (220, 230, 240))
         self._draw_circle(surface, mallet_left.position, 0.07, (70, 170, 230))
         self._draw_circle(surface, mallet_right.position, 0.07, (230, 90, 90))
@@ -129,6 +133,26 @@ class PlayScreen:
         left_pos = (-self.field.width * 0.25, 0.0)
         right_pos = (self.field.width * 0.25, 0.0)
         self.physics.set_mallet_positions(left_pos, right_pos)
+        self.trail_positions.clear()
+
+    def _update_trail(self) -> None:
+        puck_pos = self.physics.entities.puck.position
+        self.trail_positions.append((puck_pos[0], puck_pos[1]))
+        if len(self.trail_positions) > self.trail_max:
+            self.trail_positions.pop(0)
+
+    def _draw_trail(self, surface: pygame.Surface) -> None:
+        if len(self.trail_positions) < 2:
+            return
+        base_color = (140, 170, 200)
+        for index, position in enumerate(self.trail_positions[:-1]):
+            alpha = (index + 1) / len(self.trail_positions)
+            color = (
+                int(base_color[0] * alpha),
+                int(base_color[1] * alpha),
+                int(base_color[2] * alpha),
+            )
+            self._draw_circle(surface, position, 0.028, color)
 
     def _update_mallets(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
         left_pos = self._move_mallet(
