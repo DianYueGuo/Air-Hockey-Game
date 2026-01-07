@@ -224,13 +224,13 @@ class SettingsScreen:
 
     def _inc_max_speed(self) -> None:
         self.settings.max_puck_speed = self._clamp(
-            self.settings.max_puck_speed + 0.2, 0.5, 8.0
+            self.settings.max_puck_speed + 0.2, 0.1, 8.0
         )
         self.message = "Physics updated. Re-enter Play."
 
     def _dec_max_speed(self) -> None:
         self.settings.max_puck_speed = self._clamp(
-            self.settings.max_puck_speed - 0.2, 0.5, 8.0
+            self.settings.max_puck_speed - 0.2, 0.1, 8.0
         )
         self.message = "Physics updated. Re-enter Play."
 
@@ -249,7 +249,7 @@ class SettingsScreen:
     def _reset_physics(self) -> None:
         self.settings.puck_restitution = 0.6
         self.settings.puck_damping = 0.6
-        self.settings.max_puck_speed = 1.0
+        self.settings.max_puck_speed = 0.3
         self.settings.mallet_speed_limit = 2.0
         self.message = "Physics reset. Re-enter Play."
 
