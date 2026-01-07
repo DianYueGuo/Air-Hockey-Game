@@ -9,6 +9,7 @@ import pygame
 
 from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.camera import CameraCapture
+from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
 from air_hockey.engine.physics import PhysicsWorld
 from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
@@ -30,6 +31,8 @@ class PlayScreen:
         self.audio = AudioManager()
         self.camera = CameraCapture()
         self.camera_active = self.camera.start()
+        self.hsv_preset = HSV_PRESETS["orange"]
+        self.last_detection: tuple[int, int] | None = None
         self.physics = PhysicsWorld(
             self.field,
             on_puck_wall=self.audio.play_wall,
@@ -71,6 +74,7 @@ class PlayScreen:
         puck_velocity = self.physics.entities.puck.linearVelocity
         speed = (puck_velocity[0] ** 2 + puck_velocity[1] ** 2) ** 0.5
         self.audio.update_puck_movement(speed)
+        self._update_detection()
 
     def render(self, surface: pygame.Surface) -> None:
         surface.fill((10, 16, 22))
@@ -119,6 +123,7 @@ class PlayScreen:
         self._draw_circle(surface, puck.position, 0.04, (220, 230, 240))
         self._draw_circle(surface, mallet_left.position, 0.07, (70, 170, 230))
         self._draw_circle(surface, mallet_right.position, 0.07, (230, 90, 90))
+        self._draw_detection_marker(surface)
 
     def _check_goal(self) -> None:
         puck = self.physics.entities.puck
@@ -158,6 +163,28 @@ class PlayScreen:
                 int(base_color[2] * alpha),
             )
             self._draw_circle(surface, position, 0.028, color)
+
+    def _update_detection(self) -> None:
+        if not self.camera_active:
+            return
+        frame = self.camera.get_latest()
+        if frame is None:
+            return
+        result = detect_largest_ball(frame.frame, self.hsv_preset)
+        self.last_detection = result.center
+
+    def _draw_detection_marker(self, surface: pygame.Surface) -> None:
+        if not self.last_detection:
+            return
+        frame = self.camera.get_latest()
+        if frame is None:
+            return
+        frame_height, frame_width = frame.frame.shape[:2]
+        x_norm = self.last_detection[0] / frame_width
+        y_norm = self.last_detection[1] / frame_height
+        world_x = (x_norm - 0.5) * self.field.width
+        world_y = (y_norm - 0.5) * self.field.height
+        self._draw_circle(surface, (world_x, world_y), 0.03, (255, 190, 80))
 
     def _update_mallets(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
         left_pos = self._move_mallet(
