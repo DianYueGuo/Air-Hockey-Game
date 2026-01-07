@@ -381,7 +381,10 @@ class PlayScreen:
         if not self.scoreboard_window.available:
             self.hud.render_score(surface, self.score_left, self.score_right)
             return
-        self.scoreboard_window.render(self.score_left, self.score_right)
+        rendered = self.scoreboard_window.render(self.score_left, self.score_right)
+        if not rendered:
+            self.scoreboard_window.available = False
+            self.hud.render_score(surface, self.score_left, self.score_right)
 
     def _update_mallets(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
         left_pos = self._move_mallet(
