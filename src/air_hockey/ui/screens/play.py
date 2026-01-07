@@ -8,7 +8,7 @@ from typing import Callable
 import cv2
 import pygame
 
-from air_hockey.config.io import load_calibration
+from air_hockey.config.io import load_calibration, load_settings
 from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.camera import CameraCapture
 from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
@@ -36,12 +36,15 @@ class PlayScreen:
         self.audio = AudioManager()
         self.camera = CameraCapture()
         self.camera_active = self.camera.start()
+        settings = load_settings()
         self.window_options = WindowOptions(
-            webcam_view_mode=WebcamViewMode.OVERLAY,
-            scoreboard_mode=ScoreboardMode.HUD,
+            webcam_view_mode=settings.webcam_view_mode,
+            scoreboard_mode=settings.scoreboard_mode,
+            fullscreen=settings.fullscreen,
+            display_index=settings.display_index,
         )
-        self.hsv_left = HSV_PRESETS["orange"]
-        self.hsv_right = HSV_PRESETS["tennis"]
+        self.hsv_left = HSV_PRESETS.get(settings.hsv_left, HSV_PRESETS["orange"])
+        self.hsv_right = HSV_PRESETS.get(settings.hsv_right, HSV_PRESETS["tennis"])
         self.last_detection_left: tuple[int, int] | None = None
         self.last_detection_right: tuple[int, int] | None = None
         self.use_camera_control = True
@@ -53,12 +56,12 @@ class PlayScreen:
         )
         self.clock_accumulator = 0.0
         self.fixed_time_step = 1.0 / 120.0
-        self.mallet_speed = 1.2
+        self.mallet_speed = settings.mallet_speed_limit
         self.score_left = 0
         self.score_right = 0
         self.trail_positions: list[tuple[float, float]] = []
         self.trail_max = 12
-        self.theme_manager = ThemeManager()
+        self.theme_manager = ThemeManager(theme_name=settings.theme)
         self.render_config = self._build_render_config()
         self.font = pygame.font.SysFont("arial", 22)
         self.hud = Hud(window_size=window_size, score_color=self.theme_manager.theme.hud_score)
