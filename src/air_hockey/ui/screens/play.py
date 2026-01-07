@@ -59,6 +59,9 @@ class PlayScreen:
             self.field,
             on_puck_wall=self.audio.play_wall,
             on_puck_mallet=self.audio.play_mallet,
+            puck_restitution=settings.puck_restitution,
+            puck_damping=settings.puck_damping,
+            max_puck_speed=settings.max_puck_speed,
         )
         self.clock_accumulator = 0.0
         self.fixed_time_step = 1.0 / 120.0

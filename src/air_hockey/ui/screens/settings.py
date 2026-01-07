@@ -1,4 +1,4 @@
-"""Settings screen placeholder."""
+"""Settings screen with basic toggles and physics tuning."""
 
 from __future__ import annotations
 
@@ -20,52 +20,96 @@ class SettingsScreen:
         self.small_font = pygame.font.SysFont("arial", 20)
         self.settings = load_settings()
         self.message = ""
+        self.mode = "main"
         self.back_button = Button(
             rect=pygame.Rect(40, window_size[1] - 80, 140, 44),
             label="Back",
             on_click=self._exit,
             font=self.font,
         )
-        self.toggle_webcam_button = Button(
-            rect=pygame.Rect(80, 220, 320, 44),
-            label="Webcam View: OVERLAY",
-            on_click=self._toggle_webcam_view,
+        self.main_buttons = self._build_main_buttons()
+        self.physics_buttons = self._build_physics_buttons()
+        self.physics_back_button = Button(
+            rect=pygame.Rect(window_size[0] - 220, window_size[1] - 80, 180, 44),
+            label="Back to Settings",
+            on_click=self._enter_main,
             font=self.font,
         )
-        self.toggle_scoreboard_button = Button(
-            rect=pygame.Rect(80, 280, 320, 44),
-            label="Scoreboard: HUD",
-            on_click=self._toggle_scoreboard,
-            font=self.font,
-        )
-        self.toggle_theme_button = Button(
-            rect=pygame.Rect(80, 340, 320, 44),
-            label="Theme: DEFAULT",
-            on_click=self._toggle_theme,
-            font=self.font,
-        )
-        self.toggle_fullscreen_button = Button(
-            rect=pygame.Rect(80, 400, 320, 44),
-            label="Fullscreen: OFF",
-            on_click=self._toggle_fullscreen,
-            font=self.font,
-        )
-        self.display_button = Button(
-            rect=pygame.Rect(80, 460, 320, 44),
-            label="Display: 0",
-            on_click=self._cycle_display,
-            font=self.font,
-        )
-        self.swap_hsv_button = Button(
-            rect=pygame.Rect(80, 520, 320, 44),
-            label="Swap Colors",
-            on_click=self._swap_hsv_presets,
-            font=self.font,
-        )
+
+    def _build_main_buttons(self) -> list[Button]:
+        labels: list[tuple[str, Callable[[], None]]] = [
+            ("Webcam View", self._toggle_webcam_view),
+            ("Scoreboard", self._toggle_scoreboard),
+            ("Theme", self._toggle_theme),
+            ("Fullscreen", self._toggle_fullscreen),
+            ("Display", self._cycle_display),
+            ("Swap Colors", self._swap_hsv_presets),
+            ("Physics Tuning", self._enter_physics),
+        ]
+        button_width = 320
+        button_height = 44
+        spacing = 10
+        total_height = len(labels) * button_height + (len(labels) - 1) * spacing
+        start_y = (self.window_size[1] - total_height) // 2
+        start_x = (self.window_size[0] - button_width) // 2
+
+        buttons: list[Button] = []
+        for index, (label, handler) in enumerate(labels):
+            rect = pygame.Rect(
+                start_x,
+                start_y + index * (button_height + spacing),
+                button_width,
+                button_height,
+            )
+            buttons.append(Button(rect=rect, label=label, on_click=handler, font=self.font))
+        return buttons
+
+    def _build_physics_buttons(self) -> list[Button]:
+        buttons: list[Button] = []
+        button_width = 120
+        button_height = 40
+        spacing_y = 52
+        left_x = self.window_size[0] // 2 - 140
+        right_x = self.window_size[0] // 2 + 20
+        start_y = 200
+
+        def add_row(index: int, on_minus: Callable[[], None], on_plus: Callable[[], None]) -> None:
+            y = start_y + index * spacing_y
+            buttons.append(
+                Button(
+                    rect=pygame.Rect(left_x, y, button_width, button_height),
+                    label="-",
+                    on_click=on_minus,
+                    font=self.font,
+                )
+            )
+            buttons.append(
+                Button(
+                    rect=pygame.Rect(right_x, y, button_width, button_height),
+                    label="+",
+                    on_click=on_plus,
+                    font=self.font,
+                )
+            )
+
+        add_row(0, self._dec_puck_restitution, self._inc_puck_restitution)
+        add_row(1, self._dec_puck_damping, self._inc_puck_damping)
+        add_row(2, self._dec_max_speed, self._inc_max_speed)
+        add_row(3, self._dec_mallet_speed, self._inc_mallet_speed)
+
+        return buttons
 
     def _exit(self) -> None:
         save_settings(self.settings)
         self.on_back()
+
+    def _enter_physics(self) -> None:
+        self.mode = "physics"
+        self.message = ""
+
+    def _enter_main(self) -> None:
+        self.mode = "main"
+        self.message = ""
 
     def _toggle_webcam_view(self) -> None:
         current = self.settings.webcam_view_mode
@@ -102,51 +146,127 @@ class SettingsScreen:
         self.settings.hsv_right = left
         self.message = "Player colors swapped."
 
+    def _inc_puck_restitution(self) -> None:
+        self.settings.puck_restitution = self._clamp(
+            self.settings.puck_restitution + 0.05, 0.0, 1.0
+        )
+        self.message = "Physics updated. Re-enter Play."
+
+    def _dec_puck_restitution(self) -> None:
+        self.settings.puck_restitution = self._clamp(
+            self.settings.puck_restitution - 0.05, 0.0, 1.0
+        )
+        self.message = "Physics updated. Re-enter Play."
+
+    def _inc_puck_damping(self) -> None:
+        self.settings.puck_damping = self._clamp(
+            self.settings.puck_damping + 0.05, 0.0, 2.0
+        )
+        self.message = "Physics updated. Re-enter Play."
+
+    def _dec_puck_damping(self) -> None:
+        self.settings.puck_damping = self._clamp(
+            self.settings.puck_damping - 0.05, 0.0, 2.0
+        )
+        self.message = "Physics updated. Re-enter Play."
+
+    def _inc_max_speed(self) -> None:
+        self.settings.max_puck_speed = self._clamp(
+            self.settings.max_puck_speed + 0.2, 0.5, 8.0
+        )
+        self.message = "Physics updated. Re-enter Play."
+
+    def _dec_max_speed(self) -> None:
+        self.settings.max_puck_speed = self._clamp(
+            self.settings.max_puck_speed - 0.2, 0.5, 8.0
+        )
+        self.message = "Physics updated. Re-enter Play."
+
+    def _inc_mallet_speed(self) -> None:
+        self.settings.mallet_speed_limit = self._clamp(
+            self.settings.mallet_speed_limit + 0.1, 0.5, 3.0
+        )
+        self.message = "Physics updated. Re-enter Play."
+
+    def _dec_mallet_speed(self) -> None:
+        self.settings.mallet_speed_limit = self._clamp(
+            self.settings.mallet_speed_limit - 0.1, 0.5, 3.0
+        )
+        self.message = "Physics updated. Re-enter Play."
+
     def handle_event(self, event: pygame.event.Event) -> None:
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self._exit()
-            return
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                self._exit()
+                return
+            if event.key == pygame.K_BACKSPACE and self.mode == "physics":
+                self._enter_main()
+                return
         self.back_button.handle_event(event)
-        self.toggle_webcam_button.handle_event(event)
-        self.toggle_scoreboard_button.handle_event(event)
-        self.toggle_theme_button.handle_event(event)
-        self.toggle_fullscreen_button.handle_event(event)
-        self.display_button.handle_event(event)
-        self.swap_hsv_button.handle_event(event)
+        if self.mode == "main":
+            for button in self.main_buttons:
+                button.handle_event(event)
+        else:
+            for button in self.physics_buttons:
+                button.handle_event(event)
+            self.physics_back_button.handle_event(event)
 
     def update(self, dt: float) -> None:
         pass
 
     def render(self, surface: pygame.Surface) -> None:
         surface.fill((18, 22, 32))
-        title_surf = self.title_font.render("Settings", True, (235, 240, 245))
-        title_rect = title_surf.get_rect(center=(self.window_size[0] // 2, 120))
+        title = "Settings" if self.mode == "main" else "Physics Tuning"
+        title_surf = self.title_font.render(title, True, (235, 240, 245))
+        title_rect = title_surf.get_rect(center=(self.window_size[0] // 2, 110))
         surface.blit(title_surf, title_rect)
 
-        self._refresh_labels()
-        self.toggle_webcam_button.draw(surface)
-        self.toggle_scoreboard_button.draw(surface)
-        self.toggle_theme_button.draw(surface)
-        self.toggle_fullscreen_button.draw(surface)
-        self.display_button.draw(surface)
-        self.swap_hsv_button.draw(surface)
-
-        if self.message:
-            msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
-            msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 360))
-            surface.blit(msg_surf, msg_rect)
+        if self.mode == "main":
+            self._refresh_main_labels()
+            for button in self.main_buttons:
+                button.draw(surface)
+            if self.message:
+                msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
+                msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 420))
+                surface.blit(msg_surf, msg_rect)
+        else:
+            self._draw_physics_values(surface)
+            for button in self.physics_buttons:
+                button.draw(surface)
+            if self.message:
+                msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
+                msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 430))
+                surface.blit(msg_surf, msg_rect)
+            self.physics_back_button.draw(surface)
 
         self.back_button.draw(surface)
 
-    def _refresh_labels(self) -> None:
-        self.toggle_webcam_button.label = (
-            f"Webcam View: {self.settings.webcam_view_mode.value.upper()}"
-        )
-        self.toggle_scoreboard_button.label = (
-            f"Scoreboard: {self.settings.scoreboard_mode.value.upper()}"
-        )
-        self.toggle_theme_button.label = f"Theme: {self.settings.theme.upper()}"
-        self.toggle_fullscreen_button.label = (
-            f"Fullscreen: {'ON' if self.settings.fullscreen else 'OFF'}"
-        )
-        self.display_button.label = f"Display: {self.settings.display_index}"
+    def _refresh_main_labels(self) -> None:
+        labels = {
+            "Webcam View": f"Webcam View: {self.settings.webcam_view_mode.value.upper()}",
+            "Scoreboard": f"Scoreboard: {self.settings.scoreboard_mode.value.upper()}",
+            "Theme": f"Theme: {self.settings.theme.upper()}",
+            "Fullscreen": f"Fullscreen: {'ON' if self.settings.fullscreen else 'OFF'}",
+            "Display": f"Display: {self.settings.display_index}",
+            "Swap Colors": "Swap Colors",
+            "Physics Tuning": "Physics Tuning",
+        }
+        for button in self.main_buttons:
+            button.label = labels.get(button.label.split(":")[0], button.label)
+
+    def _draw_physics_values(self, surface: pygame.Surface) -> None:
+        lines = [
+            f"Puck Restitution: {self.settings.puck_restitution:.2f}",
+            f"Puck Damping: {self.settings.puck_damping:.2f}",
+            f"Max Puck Speed: {self.settings.max_puck_speed:.2f}",
+            f"Mallet Speed: {self.settings.mallet_speed_limit:.2f}",
+        ]
+        start_y = 170
+        for index, line in enumerate(lines):
+            surf = self.small_font.render(line, True, (200, 210, 220))
+            rect = surf.get_rect(center=(self.window_size[0] // 2, start_y + index * 52))
+            surface.blit(surf, rect)
+
+    @staticmethod
+    def _clamp(value: float, min_value: float, max_value: float) -> float:
+        return max(min_value, min(max_value, value))

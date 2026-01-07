@@ -58,12 +58,18 @@ class PhysicsWorld:
         field: FieldSpec,
         on_puck_wall: Optional[Callable[[], None]] = None,
         on_puck_mallet: Optional[Callable[[], None]] = None,
+        puck_restitution: float | None = None,
+        puck_damping: float | None = None,
+        max_puck_speed: float | None = None,
     ) -> None:
         self.field = field
         self.world = b2.world(gravity=(0.0, 0.0), doSleep=True)
         self.world.contactListener = ContactListener(
             on_puck_wall=on_puck_wall, on_puck_mallet=on_puck_mallet
         )
+        self.puck_restitution = puck_restitution
+        self.puck_damping = puck_damping
+        self.max_puck_speed = max_puck_speed
         self.entities = self._create_entities()
 
     def _create_entities(self) -> PhysicsEntities:
@@ -92,14 +98,16 @@ class PhysicsWorld:
 
     def _create_puck(self) -> b2.body:
         spec = PuckSpec()
+        restitution = self.puck_restitution if self.puck_restitution is not None else spec.restitution
+        damping = self.puck_damping if self.puck_damping is not None else spec.linear_damping
         body = self.world.CreateDynamicBody(position=(0.0, 0.0))
         body.CreateCircleFixture(
             radius=spec.radius,
             density=spec.density,
             friction=spec.friction,
-            restitution=spec.restitution,
+            restitution=restitution,
         )
-        body.linearDamping = spec.linear_damping
+        body.linearDamping = damping
         body.userData = "puck"
         return body
 
@@ -119,6 +127,19 @@ class PhysicsWorld:
     def step(self, time_step: float) -> None:
         self.world.Step(time_step, vel_iters=8, pos_iters=3)
         self.world.ClearForces()
+        if self.max_puck_speed:
+            self._clamp_puck_speed()
+
+    def _clamp_puck_speed(self) -> None:
+        puck = self.entities.puck
+        vx, vy = puck.linearVelocity
+        speed_sq = vx * vx + vy * vy
+        max_speed = self.max_puck_speed or 0.0
+        if max_speed <= 0.0:
+            return
+        if speed_sq > max_speed * max_speed:
+            scale = max_speed / (speed_sq ** 0.5)
+            puck.linearVelocity = (vx * scale, vy * scale)
 
     def set_mallet_positions(
         self, left_pos: tuple[float, float], right_pos: tuple[float, float]
