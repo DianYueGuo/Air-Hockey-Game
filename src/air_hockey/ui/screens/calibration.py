@@ -193,10 +193,10 @@ class CalibrationScreen:
         left = self.calibration.left
         right = self.calibration.right
         lines = [
-            f\"Left X: {left.cam_x_min} .. {left.cam_x_max}\",
-            f\"Left Y: {left.cam_y_min} .. {left.cam_y_max}\",
-            f\"Right X: {right.cam_x_min} .. {right.cam_x_max}\",
-            f\"Right Y: {right.cam_y_min} .. {right.cam_y_max}\",
+            f"Left X: {left.cam_x_min} .. {left.cam_x_max}",
+            f"Left Y: {left.cam_y_min} .. {left.cam_y_max}",
+            f"Right X: {right.cam_x_min} .. {right.cam_x_max}",
+            f"Right Y: {right.cam_y_min} .. {right.cam_y_max}",
         ]
         start_y = 280
         for index, line in enumerate(lines):
