@@ -122,14 +122,14 @@ class PhysicsWorld:
     def _create_mallet(self, side: str) -> b2.body:
         spec = MalletSpec()
         x = -self.field.width * 0.25 if side == "left" else self.field.width * 0.25
-        body = self.world.CreateKinematicBody(position=(x, 0.0))
+        body = self.world.CreateDynamicBody(position=(x, 0.0), fixedRotation=True)
         body.CreateCircleFixture(
             radius=spec.radius,
             density=spec.density,
             friction=spec.friction,
             restitution=spec.restitution,
         )
-        body.linearDamping = 0.0
+        body.linearDamping = spec.linear_damping
         body.bullet = True
         body.userData = "mallet"
         return body

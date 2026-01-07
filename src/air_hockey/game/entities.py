@@ -17,7 +17,7 @@ class PuckSpec:
 @dataclass(frozen=True)
 class MalletSpec:
     radius: float = 0.07
-    density: float = 2.0
+    density: float = 5.0
     friction: float = 0.05
     restitution: float = 1.0
-    linear_damping: float = 0.0
+    linear_damping: float = 0.2
