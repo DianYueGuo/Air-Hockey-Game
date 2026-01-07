@@ -39,7 +39,7 @@ class PlayScreen:
         self.on_pause = on_pause
         self.field = FieldSpec()
         self.mallet_spec = MalletSpec()
-        self.audio = AudioManager()
+        self.audio = AudioManager(sound_pack=settings.sound_pack)
         self.camera = CameraCapture()
         self.camera_active = False
         settings = load_settings()

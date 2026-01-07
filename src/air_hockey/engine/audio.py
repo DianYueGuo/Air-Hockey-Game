@@ -22,9 +22,12 @@ class SoundPack:
 
 
 class AudioManager:
-    def __init__(self, sound_dir: Path | None = None) -> None:
+    def __init__(self, sound_dir: Path | None = None, sound_pack: str = "default") -> None:
         self.enabled = True
-        self.sound_dir = sound_dir or DEFAULT_SOUND_DIR
+        if sound_dir is not None:
+            self.sound_dir = sound_dir
+        else:
+            self.sound_dir = DEFAULT_SOUND_DIR.parent / sound_pack
         self._movement_channel: Optional[pygame.mixer.Channel] = None
         try:
             if not pygame.mixer.get_init():

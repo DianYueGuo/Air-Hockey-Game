@@ -10,6 +10,7 @@ from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode
 @dataclass
 class Settings:
     theme: str = "default"
+    sound_pack: str = "default"
     webcam_view_mode: WebcamViewMode = WebcamViewMode.OVERLAY
     scoreboard_mode: ScoreboardMode = ScoreboardMode.HUD
     fullscreen: bool = False
@@ -25,6 +26,7 @@ class Settings:
     def to_dict(self) -> dict[str, object]:
         return {
             "theme": self.theme,
+            "sound_pack": self.sound_pack,
             "webcam_view_mode": self.webcam_view_mode.value,
             "scoreboard_mode": self.scoreboard_mode.value,
             "fullscreen": self.fullscreen,
@@ -42,6 +44,7 @@ class Settings:
     def from_dict(cls, data: dict[str, object]) -> "Settings":
         return cls(
             theme=str(data.get("theme", "default")),
+            sound_pack=str(data.get("sound_pack", "default")),
             webcam_view_mode=WebcamViewMode(str(data.get("webcam_view_mode", "overlay"))),
             scoreboard_mode=ScoreboardMode(str(data.get("scoreboard_mode", "hud"))),
             fullscreen=bool(data.get("fullscreen", False)),

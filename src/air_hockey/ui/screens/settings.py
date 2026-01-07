@@ -48,6 +48,7 @@ class SettingsScreen:
             ("Webcam View", self._toggle_webcam_view),
             ("Scoreboard", self._toggle_scoreboard),
             ("Theme", self._toggle_theme),
+            ("Sound Pack", self._toggle_sound_pack),
             ("Fullscreen", self._toggle_fullscreen),
             ("Display", self._cycle_display),
             ("Swap Colors", self._swap_hsv_presets),
@@ -168,6 +169,10 @@ class SettingsScreen:
     def _toggle_theme(self) -> None:
         self.settings.theme = "retro" if self.settings.theme == "default" else "default"
         self.message = "Theme updated."
+
+    def _toggle_sound_pack(self) -> None:
+        self.settings.sound_pack = "retro" if self.settings.sound_pack == "default" else "default"
+        self.message = "Sound pack updated."
 
     def _toggle_fullscreen(self) -> None:
         self.settings.fullscreen = not self.settings.fullscreen
@@ -308,6 +313,7 @@ class SettingsScreen:
             "Webcam View": f"Webcam View: {self.settings.webcam_view_mode.value.upper()}",
             "Scoreboard": f"Scoreboard: {self.settings.scoreboard_mode.value.upper()}",
             "Theme": f"Theme: {self.settings.theme.upper()}",
+            "Sound Pack": f"Sound Pack: {self.settings.sound_pack.upper()}",
             "Fullscreen": f"Fullscreen: {'ON' if self.settings.fullscreen else 'OFF'}",
             "Display": f"Display: {self.settings.display_index}",
             "Swap Colors": "Swap Colors",
