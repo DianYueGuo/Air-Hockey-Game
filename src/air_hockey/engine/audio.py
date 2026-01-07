@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -24,6 +25,7 @@ class AudioManager:
     def __init__(self, sound_dir: Path | None = None) -> None:
         self.enabled = True
         self.sound_dir = sound_dir or DEFAULT_SOUND_DIR
+        self._movement_channel: Optional[pygame.mixer.Channel] = None
         try:
             if not pygame.mixer.get_init():
                 pygame.mixer.init()
@@ -59,3 +61,24 @@ class AudioManager:
     def play_goal(self) -> None:
         if self.enabled and self.sounds.goal:
             self.sounds.goal.play()
+
+    def update_puck_movement(self, speed: float) -> None:
+        if not self.enabled or not self.sounds.puck_move:
+            return
+
+        threshold = 0.15
+        max_speed = 3.0
+        volume = min(max((speed - threshold) / (max_speed - threshold), 0.0), 1.0)
+
+        if volume <= 0.0:
+            if self._movement_channel and self._movement_channel.get_busy():
+                self._movement_channel.fadeout(80)
+            return
+
+        if self._movement_channel is None or not self._movement_channel.get_busy():
+            self._movement_channel = pygame.mixer.find_channel()
+            if self._movement_channel is None:
+                return
+            self._movement_channel.play(self.sounds.puck_move, loops=-1)
+
+        self._movement_channel.set_volume(volume)

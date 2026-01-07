@@ -60,6 +60,9 @@ class PlayScreen:
             self.physics.step(self.fixed_time_step)
             self._check_goal()
             self.clock_accumulator -= self.fixed_time_step
+        puck_velocity = self.physics.entities.puck.linearVelocity
+        speed = (puck_velocity[0] ** 2 + puck_velocity[1] ** 2) ** 0.5
+        self.audio.update_puck_movement(speed)
 
     def render(self, surface: pygame.Surface) -> None:
         surface.fill((10, 16, 22))
