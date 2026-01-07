@@ -83,6 +83,8 @@ class PhysicsWorld:
         thickness = self.field.wall_thickness
         half_width = self.field.width / 2
         half_height = self.field.height / 2
+        goal_half = self.field.goal_height / 2
+        side_wall_half = max(0.0, half_height - goal_half) / 2
 
         def add_wall(center_x: float, center_y: float, half_w: float, half_h: float) -> None:
             body = self.world.CreateStaticBody(
@@ -93,8 +95,13 @@ class PhysicsWorld:
 
         add_wall(0.0, -half_height - thickness, half_width, thickness)
         add_wall(0.0, half_height + thickness, half_width, thickness)
-        add_wall(-half_width - thickness, 0.0, thickness, half_height)
-        add_wall(half_width + thickness, 0.0, thickness, half_height)
+        if side_wall_half > 0:
+            top_y = -(goal_half + side_wall_half)
+            bottom_y = goal_half + side_wall_half
+            add_wall(-half_width - thickness, top_y, thickness, side_wall_half)
+            add_wall(-half_width - thickness, bottom_y, thickness, side_wall_half)
+            add_wall(half_width + thickness, top_y, thickness, side_wall_half)
+            add_wall(half_width + thickness, bottom_y, thickness, side_wall_half)
 
     def _create_puck(self) -> b2.body:
         spec = PuckSpec()

@@ -94,6 +94,7 @@ class PlayScreen:
         self.hud = Hud(window_size=window_size, score_color=self.theme_manager.theme.hud_score)
         self.scoreboard_window: ScoreboardWindow | None = None
         self.start_camera()
+        self._reset_positions()
 
     def _build_render_config(self) -> RenderConfig:
         table_width_px = int(self.field.width * 400)
@@ -214,7 +215,7 @@ class PlayScreen:
             (center_x, self.render_config.table_rect.bottom),
             width=2,
         )
-        goal_width = int(self.field.height * 0.35 * self.render_config.pixels_per_meter)
+        goal_width = int(self.field.goal_height * self.render_config.pixels_per_meter)
         goal_y = self.render_config.table_rect.centery - goal_width // 2
         pygame.draw.rect(
             surface,
