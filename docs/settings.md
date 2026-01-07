@@ -15,9 +15,9 @@ Settings are stored per user and apply when entering Play or resuming from Pause
 - **Swap Colors:** Swaps the HSV presets assigned to left/right players.
 
 ## Vision Tuning
-- **Smoothing:** Exponential smoothing factor for camera tracking (0.0 = raw, 1.0 = heavy smoothing).
-- **HSV ranges:** Adjust hue min/max plus saturation/value min/max per player. Use Reset HSV to restore defaults.
-- **Advanced (config-only):** detection scale, minimum contour area, and max jump threshold are stored in settings but not exposed in the UI.
+- **Smoothing:** Exponential smoothing factor for hand tracking (0.0 = raw, 1.0 = heavy smoothing).
+- **Detection Scale:** Downscale factor for faster hand detection (lower = faster, less detail).
+- **Max Jump:** Maximum allowed pixel jump between frames to reject outliers.
 
 ## Physics Tuning
 - **Puck Restitution:** Bounciness of the puck.

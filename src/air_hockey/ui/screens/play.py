@@ -11,13 +11,7 @@ import pygame
 from air_hockey.config.io import load_calibration, load_settings
 from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.camera import CameraCapture
-from air_hockey.engine.vision import (
-    HSV_PRESETS,
-    MotionMasker,
-    detect_largest_ball,
-    detect_largest_ball_masked,
-    resolve_hsv_range,
-)
+from air_hockey.engine.hand_tracking import HandTracker
 from air_hockey.engine.physics import PhysicsWorld
 from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode, WindowOptions
 from air_hockey.game.entities import MalletSpec
@@ -57,14 +51,7 @@ class PlayScreen:
             display_index=settings.display_index,
         )
         self.settings = settings
-        if settings.force_same_hsv:
-            self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
-            self.hsv_right = self.hsv_left
-        else:
-            self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
-            self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
-        self.motion_mask_mode = settings.motion_mask_mode
-        self.motion_masker = MotionMasker() if self.motion_mask_mode == "mog2" else None
+        self.hand_tracker = HandTracker()
         self.last_detection_left: tuple[int, int] | None = None
         self.last_detection_right: tuple[int, int] | None = None
         self.use_camera_control = True
@@ -72,7 +59,6 @@ class PlayScreen:
         self.smoothed_left: tuple[float, float] | None = None
         self.smoothed_right: tuple[float, float] | None = None
         self.detection_scale = settings.detection_scale
-        self.min_contour_area = settings.min_contour_area
         self.max_jump_px = settings.max_jump_px
         self.calibration = load_calibration()
         self.physics = PhysicsWorld(
@@ -156,30 +142,16 @@ class PlayScreen:
         self.hud.score_color = self.theme_manager.theme.hud_score
         self.mallet_speed = settings.mallet_speed_limit
         self.smoothing = settings.smoothing
-        self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
-        self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
         self.physics.update_puck_settings(
             restitution=settings.puck_restitution,
             damping=settings.puck_damping,
             max_speed=settings.max_puck_speed,
         )
-
-        if settings.force_same_hsv:
-            self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
-            self.hsv_right = self.hsv_left
-        else:
-            self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
-            self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
         self.detection_scale = settings.detection_scale
-        self.min_contour_area = settings.min_contour_area
         self.max_jump_px = settings.max_jump_px
 
         if old_sound_pack != settings.sound_pack:
             self.audio.reload(settings.sound_pack)
-
-        if self.motion_mask_mode != settings.motion_mask_mode:
-            self.motion_mask_mode = settings.motion_mask_mode
-            self.motion_masker = MotionMasker() if self.motion_mask_mode == "mog2" else None
 
         if old_webcam_mode == WebcamViewMode.WINDOW and settings.webcam_view_mode != WebcamViewMode.WINDOW:
             cv2.destroyWindow("Air Hockey Camera")
@@ -300,33 +272,12 @@ class PlayScreen:
         if frame is None:
             return
         frame_bgr = cv2.flip(frame.frame, 1)
-        frame_bgr, scale_x, scale_y = self._prepare_detection_frame(frame_bgr)
-        frame_height, frame_width = frame_bgr.shape[:2]
-        mid_x = frame_width // 2
-
-        left_frame = frame_bgr[:, :mid_x]
-        right_frame = frame_bgr[:, mid_x:]
-
-        min_area = self.min_contour_area * scale_x * scale_y
-        if self.motion_masker:
-            motion_mask = self.motion_masker.apply(frame_bgr)
-            left_motion = motion_mask[:, :mid_x]
-            right_motion = motion_mask[:, mid_x:]
-            left_result = detect_largest_ball_masked(
-                left_frame, self.hsv_left, left_motion, min_area=min_area
-            )
-            right_result = detect_largest_ball_masked(
-                right_frame, self.hsv_right, right_motion, min_area=min_area
-            )
-        else:
-            left_result = detect_largest_ball(left_frame, self.hsv_left, min_area=min_area)
-            right_result = detect_largest_ball(right_frame, self.hsv_right, min_area=min_area)
-
+        positions = self.hand_tracker.detect(frame_bgr, scale=self.detection_scale)
         self.last_detection_left = self._apply_jump_filter(
-            self.last_detection_left, self._scale_center(left_result.center, scale_x, scale_y)
+            self.last_detection_left, positions.left
         )
         self.last_detection_right = self._apply_jump_filter(
-            self.last_detection_right, self._scale_center(right_result.center, scale_x, scale_y)
+            self.last_detection_right, positions.right
         )
         if self.window_options.webcam_view_mode == WebcamViewMode.WINDOW:
             preview = frame_bgr.copy()
@@ -357,26 +308,6 @@ class PlayScreen:
                 self.last_detection_right, frame_height, mid_x, left=False
             )
             self._draw_circle(surface, world_pos, 0.03, (160, 220, 120))
-
-    def _prepare_detection_frame(self, frame_bgr: cv2.Mat) -> tuple[cv2.Mat, float, float]:
-        if self.detection_scale >= 1.0:
-            return frame_bgr, 1.0, 1.0
-        new_w = max(1, int(frame_bgr.shape[1] * self.detection_scale))
-        new_h = max(1, int(frame_bgr.shape[0] * self.detection_scale))
-        resized = cv2.resize(frame_bgr, (new_w, new_h), interpolation=cv2.INTER_AREA)
-        scale_x = new_w / frame_bgr.shape[1]
-        scale_y = new_h / frame_bgr.shape[0]
-        return resized, scale_x, scale_y
-
-    @staticmethod
-    def _scale_center(
-        center: tuple[int, int] | None, scale_x: float, scale_y: float
-    ) -> tuple[int, int] | None:
-        if center is None:
-            return None
-        x = int(center[0] / scale_x)
-        y = int(center[1] / scale_y)
-        return (x, y)
 
     def _apply_jump_filter(
         self, previous: tuple[int, int] | None, current: tuple[int, int] | None

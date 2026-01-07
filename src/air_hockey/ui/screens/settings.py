@@ -8,7 +8,6 @@ import pygame
 
 from air_hockey.config.io import load_settings, save_settings
 from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode
-from air_hockey.engine.vision import HSV_PRESETS
 from air_hockey.ui.fonts import get_font
 from air_hockey.ui.widgets import Button
 
@@ -23,7 +22,6 @@ class SettingsScreen:
         self.settings = load_settings()
         self.message = ""
         self.mode = "main"
-        self.vision_player = "left"
         self.back_button = Button(
             rect=pygame.Rect(40, window_size[1] - 80, 140, 44),
             label="Back",
@@ -45,18 +43,6 @@ class SettingsScreen:
             on_click=self._enter_main,
             font=self.font,
         )
-        self.vision_player_button = Button(
-            rect=pygame.Rect(60, 520, 200, 40),
-            label="Player: LEFT",
-            on_click=self._toggle_vision_player,
-            font=self.small_font,
-        )
-        self.vision_reset_button = Button(
-            rect=pygame.Rect(window_size[0] - 260, 520, 200, 40),
-            label="Reset HSV",
-            on_click=self._reset_hsv,
-            font=self.small_font,
-        )
 
     def _build_main_buttons(self) -> list[Button]:
         labels: list[tuple[str, Callable[[], None]]] = [
@@ -64,11 +50,8 @@ class SettingsScreen:
             ("Scoreboard", self._toggle_scoreboard),
             ("Theme", self._toggle_theme),
             ("Sound Pack", self._toggle_sound_pack),
-            ("Motion Mask", self._toggle_motion_mask),
-            ("Same Color", self._toggle_same_color),
             ("Fullscreen", self._toggle_fullscreen),
             ("Display", self._cycle_display),
-            ("Swap Colors", self._swap_hsv_presets),
             ("Vision Tuning", self._enter_vision),
             ("Physics Tuning", self._enter_physics),
         ]
@@ -131,10 +114,10 @@ class SettingsScreen:
         button_height = 40
         left_x = self.window_size[0] // 2 - 140
         right_x = self.window_size[0] // 2 + 20
-        start_y = 180
+        start_y = 200
 
         def add_row(index: int, on_minus: Callable[[], None], on_plus: Callable[[], None]) -> None:
-            y = start_y + index * 44
+            y = start_y + index * 52
             buttons.append(
                 Button(
                     rect=pygame.Rect(left_x, y, button_width, button_height),
@@ -153,12 +136,9 @@ class SettingsScreen:
             )
 
         add_row(0, self._dec_smoothing, self._inc_smoothing)
-        add_row(1, self._dec_hue_min, self._inc_hue_min)
-        add_row(2, self._dec_hue_max, self._inc_hue_max)
-        add_row(3, self._dec_sat_min, self._inc_sat_min)
-        add_row(4, self._dec_sat_max, self._inc_sat_max)
-        add_row(5, self._dec_val_min, self._inc_val_min)
-        add_row(6, self._dec_val_max, self._inc_val_max)
+        add_row(1, self._dec_detection_scale, self._inc_detection_scale)
+        add_row(2, self._dec_max_jump, self._inc_max_jump)
+
         return buttons
 
     def _exit(self) -> None:
@@ -202,16 +182,6 @@ class SettingsScreen:
         self.settings.sound_pack = "retro" if self.settings.sound_pack == "default" else "default"
         self.message = "Sound pack updated."
 
-    def _toggle_motion_mask(self) -> None:
-        self.settings.motion_mask_mode = (
-            "mog2" if self.settings.motion_mask_mode == "off" else "off"
-        )
-        self.message = "Motion mask updated. Re-enter Play or resume."
-
-    def _toggle_same_color(self) -> None:
-        self.settings.force_same_hsv = not self.settings.force_same_hsv
-        self.message = "Same-color tracking updated."
-
     def _toggle_fullscreen(self) -> None:
         self.settings.fullscreen = not self.settings.fullscreen
         self.message = "Fullscreen toggled. Restart app to apply."
@@ -220,12 +190,6 @@ class SettingsScreen:
         display_count = pygame.display.get_num_displays() or 1
         self.settings.display_index = (self.settings.display_index + 1) % display_count
         self.message = "Display index updated. Restart app to apply."
-
-    def _swap_hsv_presets(self) -> None:
-        left = self.settings.hsv_left
-        self.settings.hsv_left = self.settings.hsv_right
-        self.settings.hsv_right = left
-        self.message = "Player colors swapped."
 
     def _inc_puck_restitution(self) -> None:
         self.settings.puck_restitution = self._clamp(
@@ -283,88 +247,21 @@ class SettingsScreen:
         self.settings.smoothing = self._clamp(self.settings.smoothing - 0.05, 0.0, 1.0)
         self.message = "Vision updated. Re-enter Play."
 
-    def _toggle_vision_player(self) -> None:
-        self.vision_player = "right" if self.vision_player == "left" else "left"
-        self.message = f"Editing {self.vision_player} player."
-
-    def _reset_hsv(self) -> None:
-        if self.vision_player == "left":
-            preset = HSV_PRESETS[self.settings.hsv_left]
-            self.settings.hsv_left_range = {
-                "lower": list(preset.lower),
-                "upper": list(preset.upper),
-            }
-        else:
-            preset = HSV_PRESETS[self.settings.hsv_right]
-            self.settings.hsv_right_range = {
-                "lower": list(preset.lower),
-                "upper": list(preset.upper),
-            }
-        self.message = "HSV reset to preset."
-
-    def _current_hsv_range(self) -> dict[str, list[int]]:
-        if self.vision_player == "left":
-            current = self.settings.hsv_left_range
-            preset = HSV_PRESETS[self.settings.hsv_left]
-        else:
-            current = self.settings.hsv_right_range
-            preset = HSV_PRESETS[self.settings.hsv_right]
-        if not current:
-            current = {"lower": list(preset.lower), "upper": list(preset.upper)}
-        return current
-
-    def _save_hsv_range(self, data: dict[str, list[int]]) -> None:
-        if self.vision_player == "left":
-            self.settings.hsv_left_range = data
-        else:
-            self.settings.hsv_right_range = data
-
-    def _adjust_hsv(self, index: int, delta: int, upper: bool = False) -> None:
-        data = self._current_hsv_range()
-        key = "upper" if upper else "lower"
-        values = data[key]
-        values[index] = self._clamp_int(values[index] + delta, 0, 255)
-        if index == 0:
-            values[index] = self._clamp_int(values[index], 0, 179)
-        data[key] = values
-        self._save_hsv_range(data)
+    def _inc_detection_scale(self) -> None:
+        self.settings.detection_scale = self._clamp(self.settings.detection_scale + 0.1, 0.3, 1.0)
         self.message = "Vision updated. Re-enter Play."
 
-    def _inc_hue_min(self) -> None:
-        self._adjust_hsv(0, 1, upper=False)
+    def _dec_detection_scale(self) -> None:
+        self.settings.detection_scale = self._clamp(self.settings.detection_scale - 0.1, 0.3, 1.0)
+        self.message = "Vision updated. Re-enter Play."
 
-    def _dec_hue_min(self) -> None:
-        self._adjust_hsv(0, -1, upper=False)
+    def _inc_max_jump(self) -> None:
+        self.settings.max_jump_px = self._clamp(self.settings.max_jump_px + 10.0, 20.0, 300.0)
+        self.message = "Vision updated. Re-enter Play."
 
-    def _inc_hue_max(self) -> None:
-        self._adjust_hsv(0, 1, upper=True)
-
-    def _dec_hue_max(self) -> None:
-        self._adjust_hsv(0, -1, upper=True)
-
-    def _inc_sat_min(self) -> None:
-        self._adjust_hsv(1, 5, upper=False)
-
-    def _dec_sat_min(self) -> None:
-        self._adjust_hsv(1, -5, upper=False)
-
-    def _inc_sat_max(self) -> None:
-        self._adjust_hsv(1, 5, upper=True)
-
-    def _dec_sat_max(self) -> None:
-        self._adjust_hsv(1, -5, upper=True)
-
-    def _inc_val_min(self) -> None:
-        self._adjust_hsv(2, 5, upper=False)
-
-    def _dec_val_min(self) -> None:
-        self._adjust_hsv(2, -5, upper=False)
-
-    def _inc_val_max(self) -> None:
-        self._adjust_hsv(2, 5, upper=True)
-
-    def _dec_val_max(self) -> None:
-        self._adjust_hsv(2, -5, upper=True)
+    def _dec_max_jump(self) -> None:
+        self.settings.max_jump_px = self._clamp(self.settings.max_jump_px - 10.0, 20.0, 300.0)
+        self.message = "Vision updated. Re-enter Play."
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
@@ -386,8 +283,6 @@ class SettingsScreen:
             for button in self.vision_buttons:
                 button.handle_event(event)
             self.vision_back_button.handle_event(event)
-            self.vision_player_button.handle_event(event)
-            self.vision_reset_button.handle_event(event)
 
     def update(self, dt: float) -> None:
         pass
@@ -422,15 +317,12 @@ class SettingsScreen:
             self.physics_back_button.draw(surface)
         else:
             self._draw_vision_values(surface)
-            self.vision_player_button.label = f"Player: {self.vision_player.upper()}"
             for button in self.vision_buttons:
                 button.draw(surface)
             if self.message:
                 msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
                 msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 380))
                 surface.blit(msg_surf, msg_rect)
-            self.vision_player_button.draw(surface)
-            self.vision_reset_button.draw(surface)
             self.vision_back_button.draw(surface)
 
         self.back_button.draw(surface)
@@ -441,11 +333,8 @@ class SettingsScreen:
             "Scoreboard": f"Scoreboard: {self.settings.scoreboard_mode.value.upper()}",
             "Theme": f"Theme: {self.settings.theme.upper()}",
             "Sound Pack": f"Sound Pack: {self.settings.sound_pack.upper()}",
-            "Motion Mask": f"Motion Mask: {self.settings.motion_mask_mode.upper()}",
-            "Same Color": f"Same Color: {'ON' if self.settings.force_same_hsv else 'OFF'}",
             "Fullscreen": f"Fullscreen: {'ON' if self.settings.fullscreen else 'OFF'}",
             "Display": f"Display: {self.settings.display_index}",
-            "Swap Colors": "Swap Colors",
             "Vision Tuning": "Vision Tuning",
             "Physics Tuning": "Physics Tuning",
         }
@@ -467,26 +356,16 @@ class SettingsScreen:
             surface.blit(surf, rect)
 
     def _draw_vision_values(self, surface: pygame.Surface) -> None:
-        data = self._current_hsv_range()
         lines = [
             f"Smoothing: {self.settings.smoothing:.2f}",
-            f"Player: {self.vision_player.upper()}",
-            f"Hue Min: {data['lower'][0]}",
-            f"Hue Max: {data['upper'][0]}",
-            f"Sat Min: {data['lower'][1]}",
-            f"Sat Max: {data['upper'][1]}",
-            f"Val Min: {data['lower'][2]}",
-            f"Val Max: {data['upper'][2]}",
+            f"Detection Scale: {self.settings.detection_scale:.2f}",
+            f"Max Jump (px): {self.settings.max_jump_px:.0f}",
         ]
-        start_y = 130
+        start_y = 170
         for index, line in enumerate(lines):
             surf = self.small_font.render(line, True, (200, 210, 220))
-            rect = surf.get_rect(center=(self.window_size[0] // 2, start_y + index * 22))
+            rect = surf.get_rect(center=(self.window_size[0] // 2, start_y + index * 52))
             surface.blit(surf, rect)
-
-    @staticmethod
-    def _clamp_int(value: int, min_value: int, max_value: int) -> int:
-        return max(min_value, min(max_value, value))
 
     @staticmethod
     def _clamp(value: float, min_value: float, max_value: float) -> float:
