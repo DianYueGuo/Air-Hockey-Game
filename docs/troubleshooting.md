@@ -12,3 +12,7 @@
 ## Audio issues
 - If you hear no sound, check that your system audio output is not muted.
 - Some systems block pygame.mixer initialization when no audio device is available.
+
+## Scoreboard window issues
+- The separate scoreboard window uses `pygame._sdl2` when available; if not, the HUD will be used instead.
+- On some platforms, multi-window support may be limited.

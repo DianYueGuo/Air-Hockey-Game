@@ -5,3 +5,4 @@
 - Default dev window size is 960x540.
 - Settings and calibration apply when entering the relevant screen; re-enter Play to refresh changes.
 - License: MIT.
+- Separate scoreboard window uses `pygame._sdl2` when available; otherwise fallback to HUD.
