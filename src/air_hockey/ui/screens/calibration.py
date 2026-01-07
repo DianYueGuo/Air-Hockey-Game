@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
+import cv2
 import pygame
 
 from air_hockey.config.io import save_calibration
