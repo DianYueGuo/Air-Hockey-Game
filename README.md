@@ -1,4 +1,4 @@
-# Air Hockey — Box2D + Pygame + Webcam Ball Tracking
+# Air Hockey — Pygame + Webcam Ball Tracking
 
 This repository builds a two-player air hockey game controlled by colored balls tracked via webcam.
 

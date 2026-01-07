@@ -1,7 +1,7 @@
 # Status Checklist
 
 ## Core Gameplay
-- [x] Puck + mallets + walls physics (Box2D)
+- [x] Puck + mallets + walls physics (custom)
 - [x] Keyboard control for mallets (temporary)
 - [x] Goal detection + scoring + reset
 - [x] HUD scoreboard

@@ -1,4 +1,4 @@
-"""Playable field with Box2D physics (no controls yet)."""
+"""Playable field with custom physics (no controls yet)."""
 
 from __future__ import annotations
 

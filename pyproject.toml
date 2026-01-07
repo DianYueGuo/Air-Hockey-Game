@@ -5,13 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "air-hockey"
 version = "0.1.0"
-description = "Air Hockey with Box2D, Pygame, and OpenCV"
+description = "Air Hockey with Pygame and OpenCV"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
   "pygame",
   "opencv-python",
-  "box2d-py",
   "numpy",
   "mediapipe==0.10.14; python_version < '3.13'",
 ]
