@@ -25,6 +25,7 @@ class Settings:
     hsv_left_range: dict[str, list[int]] | None = None
     hsv_right_range: dict[str, list[int]] | None = None
     motion_mask_mode: str = "off"
+    force_same_hsv: bool = True
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -44,6 +45,7 @@ class Settings:
             "hsv_left_range": self.hsv_left_range,
             "hsv_right_range": self.hsv_right_range,
             "motion_mask_mode": self.motion_mask_mode,
+            "force_same_hsv": self.force_same_hsv,
         }
 
     @classmethod
@@ -65,4 +67,5 @@ class Settings:
             hsv_left_range=data.get("hsv_left_range"),
             hsv_right_range=data.get("hsv_right_range"),
             motion_mask_mode=str(data.get("motion_mask_mode", "off")),
+            force_same_hsv=bool(data.get("force_same_hsv", True)),
         )

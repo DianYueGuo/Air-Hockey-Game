@@ -57,8 +57,12 @@ class PlayScreen:
             display_index=settings.display_index,
         )
         self.settings = settings
-        self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
-        self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
+        if settings.force_same_hsv:
+            self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
+            self.hsv_right = self.hsv_left
+        else:
+            self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
+            self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
         self.motion_mask_mode = settings.motion_mask_mode
         self.motion_masker = MotionMasker() if self.motion_mask_mode == "mog2" else None
         self.last_detection_left: tuple[int, int] | None = None
@@ -154,6 +158,13 @@ class PlayScreen:
             damping=settings.puck_damping,
             max_speed=settings.max_puck_speed,
         )
+
+        if settings.force_same_hsv:
+            self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
+            self.hsv_right = self.hsv_left
+        else:
+            self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
+            self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
 
         if old_sound_pack != settings.sound_pack:
             self.audio.reload(settings.sound_pack)

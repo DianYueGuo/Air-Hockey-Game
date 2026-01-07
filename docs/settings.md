@@ -9,6 +9,7 @@ Settings are stored per user and apply when entering Play or resuming from Pause
 - **Theme:** Selects the visual theme.
 - **Sound Pack:** Selects the audio pack.
 - **Motion Mask:** Toggle background subtraction (MOG2) to ignore static background.
+- **Same Color:** Use the same HSV preset for both players.
 - **Fullscreen:** Requires app restart to apply.
 - **Display Index:** Cycles displays; requires app restart to apply.
 - **Swap Colors:** Swaps the HSV presets assigned to left/right players.
