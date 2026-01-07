@@ -28,14 +28,20 @@ class RenderConfig:
 
 
 class PlayScreen:
-    def __init__(self, window_size: tuple[int, int], on_back: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        window_size: tuple[int, int],
+        on_back: Callable[[], None],
+        on_pause: Callable[[], None],
+    ) -> None:
         self.window_size = window_size
         self.on_back = on_back
+        self.on_pause = on_pause
         self.field = FieldSpec()
         self.mallet_spec = MalletSpec()
         self.audio = AudioManager()
         self.camera = CameraCapture()
-        self.camera_active = self.camera.start()
+        self.camera_active = False
         settings = load_settings()
         self.window_options = WindowOptions(
             webcam_view_mode=settings.webcam_view_mode,
@@ -66,6 +72,7 @@ class PlayScreen:
         self.font = pygame.font.SysFont("arial", 22)
         self.hud = Hud(window_size=window_size, score_color=self.theme_manager.theme.hud_score)
         self.scoreboard_window: ScoreboardWindow | None = None
+        self.start_camera()
 
     def _build_render_config(self) -> RenderConfig:
         table_width_px = int(self.field.width * 400)
@@ -76,13 +83,23 @@ class PlayScreen:
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            if self.camera_active:
-                self.camera.stop()
-            if self.window_options.webcam_view_mode == WebcamViewMode.WINDOW:
-                cv2.destroyWindow("Air Hockey Camera")
-            if self.scoreboard_window is not None:
-                self.scoreboard_window.close()
-            self.on_back()
+            self.on_pause()
+
+    def start_camera(self) -> None:
+        if not self.camera_active:
+            self.camera_active = self.camera.start()
+
+    def stop_camera(self) -> None:
+        if self.camera_active:
+            self.camera.stop()
+            self.camera_active = False
+        if self.window_options.webcam_view_mode == WebcamViewMode.WINDOW:
+            cv2.destroyWindow("Air Hockey Camera")
+
+    def stop(self) -> None:
+        self.stop_camera()
+        if self.scoreboard_window is not None:
+            self.scoreboard_window.close()
 
     def update(self, dt: float) -> None:
         self.clock_accumulator += dt
