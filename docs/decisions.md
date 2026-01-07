@@ -6,3 +6,4 @@
 - Settings and calibration apply when entering Play; settings also refresh when resuming from Pause.
 - License: MIT.
 - Separate scoreboard window uses `pygame._sdl2` when available; otherwise fallback to HUD.
+- Traditional serve rule: the player who was scored on serves next from their side.

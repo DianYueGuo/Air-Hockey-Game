@@ -85,6 +85,7 @@ class PlayScreen:
         self.mallet_speed = settings.mallet_speed_limit
         self.score_left = 0
         self.score_right = 0
+        self.serve_side = "left"
         self.trail_positions: list[tuple[float, float]] = []
         self.trail_max = 12
         self.theme_manager = ThemeManager(theme_name=settings.theme)
@@ -244,22 +245,25 @@ class PlayScreen:
         if puck.position[0] < -half_width:
             self.score_right += 1
             self.audio.play_goal()
+            self.serve_side = "left"
             self._reset_positions()
         elif puck.position[0] > half_width:
             self.score_left += 1
             self.audio.play_goal()
+            self.serve_side = "right"
             self._reset_positions()
 
     def _reset_positions(self) -> None:
-        self.physics.entities.puck.position = (0.0, 0.0)
+        puck_x = -self.field.width * 0.25 if self.serve_side == "left" else self.field.width * 0.25
+        self.physics.entities.puck.position = (puck_x, 0.0)
         self.physics.entities.puck.linearVelocity = (0.0, 0.0)
         left_pos = (-self.field.width * 0.25, 0.0)
         right_pos = (self.field.width * 0.25, 0.0)
         self.physics.set_mallet_positions(
             left_pos,
             right_pos,
-            time_step=dt,
-            max_speed=self.mallet_speed,
+            time_step=self.fixed_time_step,
+            teleport=True,
         )
         self.trail_positions.clear()
 
