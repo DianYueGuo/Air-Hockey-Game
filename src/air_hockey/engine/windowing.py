@@ -12,6 +12,12 @@ class WebcamViewMode(str, Enum):
     WINDOW = "window"
 
 
+class ScoreboardMode(str, Enum):
+    HUD = "hud"
+    WINDOW = "window"
+
+
 @dataclass
 class WindowOptions:
     webcam_view_mode: WebcamViewMode = WebcamViewMode.HIDDEN
+    scoreboard_mode: ScoreboardMode = ScoreboardMode.HUD

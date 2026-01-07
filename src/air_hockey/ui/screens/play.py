@@ -13,10 +13,11 @@ from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.camera import CameraCapture
 from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
 from air_hockey.engine.physics import PhysicsWorld
-from air_hockey.engine.windowing import WebcamViewMode, WindowOptions
+from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode, WindowOptions
 from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
 from air_hockey.ui.screens.hud import Hud
+from air_hockey.ui.screens.scoreboard import ScoreboardWindow
 
 
 @dataclass
@@ -34,7 +35,10 @@ class PlayScreen:
         self.audio = AudioManager()
         self.camera = CameraCapture()
         self.camera_active = self.camera.start()
-        self.window_options = WindowOptions(webcam_view_mode=WebcamViewMode.OVERLAY)
+        self.window_options = WindowOptions(
+            webcam_view_mode=WebcamViewMode.OVERLAY,
+            scoreboard_mode=ScoreboardMode.HUD,
+        )
         self.hsv_left = HSV_PRESETS["orange"]
         self.hsv_right = HSV_PRESETS["tennis"]
         self.last_detection_left: tuple[int, int] | None = None
@@ -56,6 +60,7 @@ class PlayScreen:
         self.render_config = self._build_render_config()
         self.font = pygame.font.SysFont("arial", 22)
         self.hud = Hud(window_size=window_size)
+        self.scoreboard_window: ScoreboardWindow | None = None
 
     def _build_render_config(self) -> RenderConfig:
         table_width_px = int(self.field.width * 400)
@@ -70,6 +75,8 @@ class PlayScreen:
                 self.camera.stop()
             if self.window_options.webcam_view_mode == WebcamViewMode.WINDOW:
                 cv2.destroyWindow("Air Hockey Camera")
+            if self.scoreboard_window is not None:
+                self.scoreboard_window.close()
             self.on_back()
 
     def update(self, dt: float) -> None:
@@ -90,7 +97,10 @@ class PlayScreen:
         surface.fill((10, 16, 22))
         self._draw_table(surface)
         self._draw_entities(surface)
-        self.hud.render_score(surface, self.score_left, self.score_right)
+        if self.window_options.scoreboard_mode == ScoreboardMode.HUD:
+            self.hud.render_score(surface, self.score_left, self.score_right)
+        else:
+            self._render_scoreboard_window(surface)
         self._draw_webcam_overlay(surface)
         hint = self.font.render("ESC to return to menu", True, (180, 190, 205))
         surface.blit(hint, (16, 16))
@@ -238,6 +248,14 @@ class PlayScreen:
         overlay_rect = overlay.get_rect()
         overlay_rect.midbottom = (self.window_size[0] // 2, self.window_size[1] - 10)
         surface.blit(overlay, overlay_rect)
+
+    def _render_scoreboard_window(self, surface: pygame.Surface) -> None:
+        if self.scoreboard_window is None:
+            self.scoreboard_window = ScoreboardWindow()
+        if not self.scoreboard_window.available:
+            self.hud.render_score(surface, self.score_left, self.score_right)
+            return
+        self.scoreboard_window.render(self.score_left, self.score_right)
 
     def _update_mallets(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
         left_pos = self._move_mallet(
