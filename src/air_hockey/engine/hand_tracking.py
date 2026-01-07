@@ -58,10 +58,10 @@ class HandTracker:
         right_pos = None
         if results.pose_landmarks:
             left_pos = self._wrist_position(
-                results.pose_landmarks, frame.shape[1], frame.shape[0], left=True
+                results.pose_landmarks, frame.shape[1], frame.shape[0], left=False
             )
             right_pos = self._wrist_position(
-                results.pose_landmarks, frame.shape[1], frame.shape[0], left=False
+                results.pose_landmarks, frame.shape[1], frame.shape[0], left=True
             )
             if scale < 1.0:
                 if left_pos is not None:
