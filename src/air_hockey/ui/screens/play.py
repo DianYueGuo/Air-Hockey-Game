@@ -51,7 +51,7 @@ class PlayScreen:
             display_index=settings.display_index,
         )
         self.settings = settings
-        self.hand_tracker = HandTracker()
+        self.hand_tracker = HandTracker(process_every=settings.hand_process_every)
         self.last_detection_left: tuple[int, int] | None = None
         self.last_detection_right: tuple[int, int] | None = None
         self.use_camera_control = True
@@ -60,6 +60,7 @@ class PlayScreen:
         self.smoothed_right: tuple[float, float] | None = None
         self.detection_scale = settings.detection_scale
         self.max_jump_px = settings.max_jump_px
+        self.hand_process_every = settings.hand_process_every
         self.calibration = load_calibration()
         self.physics = PhysicsWorld(
             self.field,
@@ -149,6 +150,9 @@ class PlayScreen:
         )
         self.detection_scale = settings.detection_scale
         self.max_jump_px = settings.max_jump_px
+        self.hand_process_every = settings.hand_process_every
+        if self.hand_tracker.process_every != self.hand_process_every:
+            self.hand_tracker.process_every = max(1, self.hand_process_every)
 
         if old_sound_pack != settings.sound_pack:
             self.audio.reload(settings.sound_pack)

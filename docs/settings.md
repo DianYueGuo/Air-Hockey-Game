@@ -18,6 +18,7 @@ Settings are stored per user and apply when entering Play or resuming from Pause
 - **Smoothing:** Exponential smoothing factor for hand tracking (0.0 = raw, 1.0 = heavy smoothing).
 - **Detection Scale:** Downscale factor for faster hand detection (lower = faster, less detail).
 - **Max Jump:** Maximum allowed pixel jump between frames to reject outliers.
+- **Process Every:** Run hand detection every N frames to reduce CPU load.
 
 ## Physics Tuning
 - **Puck Restitution:** Bounciness of the puck.

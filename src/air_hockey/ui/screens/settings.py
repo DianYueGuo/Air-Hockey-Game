@@ -138,6 +138,7 @@ class SettingsScreen:
         add_row(0, self._dec_smoothing, self._inc_smoothing)
         add_row(1, self._dec_detection_scale, self._inc_detection_scale)
         add_row(2, self._dec_max_jump, self._inc_max_jump)
+        add_row(3, self._dec_hand_rate, self._inc_hand_rate)
 
         return buttons
 
@@ -263,6 +264,18 @@ class SettingsScreen:
         self.settings.max_jump_px = self._clamp(self.settings.max_jump_px - 10.0, 20.0, 300.0)
         self.message = "Vision updated. Re-enter Play."
 
+    def _inc_hand_rate(self) -> None:
+        self.settings.hand_process_every = int(
+            self._clamp(self.settings.hand_process_every + 1, 1.0, 5.0)
+        )
+        self.message = "Vision updated. Re-enter Play."
+
+    def _dec_hand_rate(self) -> None:
+        self.settings.hand_process_every = int(
+            self._clamp(self.settings.hand_process_every - 1, 1.0, 5.0)
+        )
+        self.message = "Vision updated. Re-enter Play."
+
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
@@ -360,11 +373,12 @@ class SettingsScreen:
             f"Smoothing: {self.settings.smoothing:.2f}",
             f"Detection Scale: {self.settings.detection_scale:.2f}",
             f"Max Jump (px): {self.settings.max_jump_px:.0f}",
+            f"Process Every: {self.settings.hand_process_every} frame(s)",
         ]
-        start_y = 170
+        start_y = 150
         for index, line in enumerate(lines):
             surf = self.small_font.render(line, True, (200, 210, 220))
-            rect = surf.get_rect(center=(self.window_size[0] // 2, start_y + index * 52))
+            rect = surf.get_rect(center=(self.window_size[0] // 2, start_y + index * 44))
             surface.blit(surf, rect)
 
     @staticmethod

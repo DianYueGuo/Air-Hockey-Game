@@ -26,9 +26,10 @@ class Settings:
     hsv_right_range: dict[str, list[int]] | None = None
     motion_mask_mode: str = "off"
     force_same_hsv: bool = True
-    detection_scale: float = 0.5
+    detection_scale: float = 0.35
     min_contour_area: float = 200.0
     max_jump_px: float = 80.0
+    hand_process_every: int = 2
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -52,6 +53,7 @@ class Settings:
             "detection_scale": self.detection_scale,
             "min_contour_area": self.min_contour_area,
             "max_jump_px": self.max_jump_px,
+            "hand_process_every": self.hand_process_every,
         }
 
     @classmethod
@@ -77,4 +79,5 @@ class Settings:
             detection_scale=float(data.get("detection_scale", 0.5)),
             min_contour_area=float(data.get("min_contour_area", 200.0)),
             max_jump_px=float(data.get("max_jump_px", 80.0)),
+            hand_process_every=int(data.get("hand_process_every", 2)),
         )

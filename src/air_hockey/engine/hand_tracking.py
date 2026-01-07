@@ -22,7 +22,7 @@ class HandPositions:
 
 
 class HandTracker:
-    def __init__(self) -> None:
+    def __init__(self, process_every: int = 1) -> None:
         if mp is None:
             raise RuntimeError(
                 "mediapipe is not available. Install mediapipe for Python 3.11/3.12 "
@@ -33,6 +33,9 @@ class HandTracker:
                 "mediapipe import succeeded but 'solutions' is missing. "
                 "This usually means an incompatible version or a naming conflict."
             )
+        self.process_every = max(1, process_every)
+        self._frame_index = 0
+        self._last_positions = HandPositions(left=None, right=None)
         self._hands = mp.solutions.hands.Hands(
             max_num_hands=2,
             model_complexity=0,
@@ -41,6 +44,9 @@ class HandTracker:
         )
 
     def detect(self, frame_bgr: cv2.Mat, scale: float = 1.0) -> HandPositions:
+        self._frame_index += 1
+        if self._frame_index % self.process_every != 0:
+            return self._last_positions
         frame = frame_bgr
         if scale < 1.0:
             new_w = max(1, int(frame_bgr.shape[1] * scale))
@@ -62,7 +68,8 @@ class HandTracker:
                     left_pos = (cx, cy)
                 elif label == "right" and right_pos is None:
                     right_pos = (cx, cy)
-        return HandPositions(left=left_pos, right=right_pos)
+        self._last_positions = HandPositions(left=left_pos, right=right_pos)
+        return self._last_positions
 
     @staticmethod
     def _palm_center(landmarks, width: int, height: int) -> tuple[int, int]:
