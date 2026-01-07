@@ -31,8 +31,11 @@ class PlayScreen:
         self.audio = AudioManager()
         self.camera = CameraCapture()
         self.camera_active = self.camera.start()
-        self.hsv_preset = HSV_PRESETS["orange"]
-        self.last_detection: tuple[int, int] | None = None
+        self.hsv_left = HSV_PRESETS["orange"]
+        self.hsv_right = HSV_PRESETS["tennis"]
+        self.last_detection_left: tuple[int, int] | None = None
+        self.last_detection_right: tuple[int, int] | None = None
+        self.use_camera_control = True
         self.physics = PhysicsWorld(
             self.field,
             on_puck_wall=self.audio.play_wall,
@@ -66,6 +69,7 @@ class PlayScreen:
         self.clock_accumulator += dt
         keys = pygame.key.get_pressed()
         while self.clock_accumulator >= self.fixed_time_step:
+            self._update_detection()
             self._update_mallets(keys, self.fixed_time_step)
             self.physics.step(self.fixed_time_step)
             self._check_goal()
@@ -74,7 +78,6 @@ class PlayScreen:
         puck_velocity = self.physics.entities.puck.linearVelocity
         speed = (puck_velocity[0] ** 2 + puck_velocity[1] ** 2) ** 0.5
         self.audio.update_puck_movement(speed)
-        self._update_detection()
 
     def render(self, surface: pygame.Surface) -> None:
         surface.fill((10, 16, 22))
@@ -170,21 +173,36 @@ class PlayScreen:
         frame = self.camera.get_latest()
         if frame is None:
             return
-        result = detect_largest_ball(frame.frame, self.hsv_preset)
-        self.last_detection = result.center
+        frame_height, frame_width = frame.frame.shape[:2]
+        mid_x = frame_width // 2
+
+        left_frame = frame.frame[:, :mid_x]
+        right_frame = frame.frame[:, mid_x:]
+
+        left_result = detect_largest_ball(left_frame, self.hsv_left)
+        right_result = detect_largest_ball(right_frame, self.hsv_right)
+
+        self.last_detection_left = left_result.center
+        self.last_detection_right = right_result.center
 
     def _draw_detection_marker(self, surface: pygame.Surface) -> None:
-        if not self.last_detection:
-            return
         frame = self.camera.get_latest()
         if frame is None:
             return
         frame_height, frame_width = frame.frame.shape[:2]
-        x_norm = self.last_detection[0] / frame_width
-        y_norm = self.last_detection[1] / frame_height
-        world_x = (x_norm - 0.5) * self.field.width
-        world_y = (y_norm - 0.5) * self.field.height
-        self._draw_circle(surface, (world_x, world_y), 0.03, (255, 190, 80))
+        mid_x = frame_width // 2
+
+        if self.last_detection_left:
+            world_pos = self._map_detection_to_world(
+                self.last_detection_left, frame_height, mid_x, left=True
+            )
+            self._draw_circle(surface, world_pos, 0.03, (255, 190, 80))
+
+        if self.last_detection_right:
+            world_pos = self._map_detection_to_world(
+                self.last_detection_right, frame_height, mid_x, left=False
+            )
+            self._draw_circle(surface, world_pos, 0.03, (160, 220, 120))
 
     def _update_mallets(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
         left_pos = self._move_mallet(
@@ -199,6 +217,13 @@ class PlayScreen:
             dt,
             left=False,
         )
+        if self.use_camera_control:
+            left_cam = self._camera_position(left=True)
+            right_cam = self._camera_position(left=False)
+            if left_cam is not None:
+                left_pos = left_cam
+            if right_cam is not None:
+                right_pos = right_cam
         self.physics.set_mallet_positions(left_pos, right_pos)
 
     def _move_mallet(
@@ -218,6 +243,10 @@ class PlayScreen:
         x = current_pos[0] + dx
         y = current_pos[1] + dy
 
+        return self._clamp_mallet_position((x, y), left=left)
+
+    def _clamp_mallet_position(self, position: tuple[float, float], left: bool) -> tuple[float, float]:
+        x, y = position
         half_width = self.field.width / 2.0
         half_height = self.field.height / 2.0
         radius = self.mallet_spec.radius
@@ -236,6 +265,36 @@ class PlayScreen:
         y = max(y_min, min(y, y_max))
 
         return (x, y)
+
+    def _camera_position(self, left: bool) -> tuple[float, float] | None:
+        frame = self.camera.get_latest()
+        if frame is None:
+            return None
+        frame_height, frame_width = frame.frame.shape[:2]
+        mid_x = frame_width // 2
+        if left:
+            detection = self.last_detection_left
+            if detection is None:
+                return None
+            return self._map_detection_to_world(detection, frame_height, mid_x, left=True)
+        detection = self.last_detection_right
+        if detection is None:
+            return None
+        return self._map_detection_to_world(detection, frame_height, mid_x, left=False)
+
+    def _map_detection_to_world(
+        self, detection: tuple[int, int], frame_height: int, half_width_px: int, left: bool
+    ) -> tuple[float, float]:
+        x_norm = detection[0] / max(1, half_width_px)
+        y_norm = detection[1] / max(1, frame_height)
+        half_width = self.field.width / 2.0
+        half_height = self.field.height / 2.0
+        if left:
+            world_x = (-half_width) + x_norm * half_width
+        else:
+            world_x = 0.0 + x_norm * half_width
+        world_y = (-half_height) + y_norm * self.field.height
+        return self._clamp_mallet_position((world_x, world_y), left=left)
 
     def _draw_circle(
         self, surface: pygame.Surface, position: tuple[float, float], radius: float, color: tuple[int, int, int]
