@@ -20,7 +20,7 @@ class Settings:
     smoothing: float = 0.2
     puck_restitution: float = 0.6
     puck_damping: float = 0.6
-    max_puck_speed: float = 1.4
+    max_puck_speed: float = 1.0
     mallet_speed_limit: float = 2.0
     hsv_left_range: dict[str, list[int]] | None = None
     hsv_right_range: dict[str, list[int]] | None = None
