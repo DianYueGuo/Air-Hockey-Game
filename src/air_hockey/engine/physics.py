@@ -108,6 +108,7 @@ class PhysicsWorld:
             restitution=restitution,
         )
         body.linearDamping = damping
+        body.bullet = True
         body.userData = "puck"
         return body
 
@@ -125,7 +126,7 @@ class PhysicsWorld:
         return body
 
     def step(self, time_step: float) -> None:
-        self.world.Step(time_step, 8, 3)
+        self.world.Step(time_step, 10, 6)
         self.world.ClearForces()
         if self.max_puck_speed:
             self._clamp_puck_speed()
@@ -156,6 +157,7 @@ class PhysicsWorld:
         right_pos: tuple[float, float],
         time_step: float,
         teleport: bool = False,
+        max_speed: float | None = None,
     ) -> None:
         if teleport:
             self.entities.mallet_left.linearVelocity = (0.0, 0.0)
@@ -174,5 +176,17 @@ class PhysicsWorld:
             (right_pos[0] - right_body.position[0]) / time_step,
             (right_pos[1] - right_body.position[1]) / time_step,
         )
+        if max_speed and max_speed > 0:
+            left_vel = self._clamp_velocity(left_vel, max_speed)
+            right_vel = self._clamp_velocity(right_vel, max_speed)
         left_body.linearVelocity = left_vel
         right_body.linearVelocity = right_vel
+
+    @staticmethod
+    def _clamp_velocity(velocity: tuple[float, float], max_speed: float) -> tuple[float, float]:
+        vx, vy = velocity
+        speed_sq = vx * vx + vy * vy
+        if speed_sq <= max_speed * max_speed:
+            return velocity
+        scale = max_speed / (speed_sq ** 0.5)
+        return (vx * scale, vy * scale)
