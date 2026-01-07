@@ -6,6 +6,7 @@ from typing import Callable
 
 import pygame
 
+from air_hockey.ui.fonts import get_font
 from air_hockey.ui.widgets import Button
 
 
@@ -27,8 +28,8 @@ class PauseScreen:
         self.on_restart = on_restart
         self.on_quit = on_quit
         self.background = background
-        self.font = pygame.font.SysFont("arial", 28)
-        self.title_font = pygame.font.SysFont("arial", 40, bold=True)
+        self.font = get_font(28)
+        self.title_font = get_font(40, bold=True)
         self.buttons = self._build_buttons()
 
     def _build_buttons(self) -> list[Button]:

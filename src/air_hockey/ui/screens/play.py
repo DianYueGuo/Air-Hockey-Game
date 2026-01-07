@@ -17,6 +17,7 @@ from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode, WindowOp
 from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
 from air_hockey.game.themes import ThemeManager
+from air_hockey.ui.fonts import get_font
 from air_hockey.ui.screens.hud import Hud
 from air_hockey.ui.screens.scoreboard import ScoreboardWindow
 
@@ -76,7 +77,7 @@ class PlayScreen:
         self.trail_max = 12
         self.theme_manager = ThemeManager(theme_name=settings.theme)
         self.render_config = self._build_render_config()
-        self.font = pygame.font.SysFont("arial", 22)
+        self.font = get_font(22)
         self.hud = Hud(window_size=window_size, score_color=self.theme_manager.theme.hud_score)
         self.scoreboard_window: ScoreboardWindow | None = None
         self.start_camera()

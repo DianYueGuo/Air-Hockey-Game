@@ -6,6 +6,8 @@ from typing import Any
 
 import pygame
 
+from air_hockey.ui.fonts import get_font
+
 
 class ScoreboardWindow:
     def __init__(self, window_size: tuple[int, int] = (360, 160)) -> None:
@@ -13,7 +15,7 @@ class ScoreboardWindow:
         self.available = False
         self._window: Any | None = None
         self._renderer: Any | None = None
-        self.font = pygame.font.SysFont("arial", 36, bold=True)
+        self.font = get_font(36, bold=True)
         try:
             import pygame._sdl2.video as sdl2
         except ImportError:

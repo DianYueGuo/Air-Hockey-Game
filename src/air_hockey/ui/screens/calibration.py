@@ -11,6 +11,7 @@ from air_hockey.config.io import save_calibration
 from air_hockey.engine.calibration import CalibrationData, PlayerCalibration
 from air_hockey.engine.camera import CameraCapture
 from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
+from air_hockey.ui.fonts import get_font
 from air_hockey.ui.widgets import Button
 
 
@@ -25,9 +26,9 @@ class CalibrationScreen:
     def __init__(self, window_size: tuple[int, int], on_back: Callable[[], None]) -> None:
         self.window_size = window_size
         self.on_back = on_back
-        self.font = pygame.font.SysFont("arial", 26)
-        self.title_font = pygame.font.SysFont("arial", 40, bold=True)
-        self.small_font = pygame.font.SysFont("arial", 20)
+        self.font = get_font(26)
+        self.title_font = get_font(40, bold=True)
+        self.small_font = get_font(20)
         self.back_button = Button(
             rect=pygame.Rect(40, window_size[1] - 80, 140, 44),
             label="Back",

@@ -6,6 +6,7 @@ from typing import Callable
 
 import pygame
 
+from air_hockey.ui.fonts import get_font
 from air_hockey.ui.widgets import Button
 
 
@@ -19,8 +20,8 @@ class MenuScreen:
         on_quit: Callable[[], None] | None = None,
     ) -> None:
         self.window_size = window_size
-        self.font = pygame.font.SysFont("arial", 28)
-        self.title_font = pygame.font.SysFont("arial", 44, bold=True)
+        self.font = get_font(28)
+        self.title_font = get_font(44, bold=True)
         self.message = ""
         self.on_play = on_play
         self.on_settings = on_settings

@@ -9,6 +9,7 @@ import pygame
 from air_hockey.config.io import load_settings, save_settings
 from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode
 from air_hockey.engine.vision import HSV_PRESETS
+from air_hockey.ui.fonts import get_font
 from air_hockey.ui.widgets import Button
 
 
@@ -16,9 +17,9 @@ class SettingsScreen:
     def __init__(self, window_size: tuple[int, int], on_back: Callable[[], None]) -> None:
         self.window_size = window_size
         self.on_back = on_back
-        self.font = pygame.font.SysFont("arial", 28)
-        self.title_font = pygame.font.SysFont("arial", 40, bold=True)
-        self.small_font = pygame.font.SysFont("arial", 20)
+        self.font = get_font(28)
+        self.title_font = get_font(40, bold=True)
+        self.small_font = get_font(20)
         self.settings = load_settings()
         self.message = ""
         self.mode = "main"
