@@ -25,3 +25,4 @@ Settings are stored per user and apply when entering Play or resuming from Pause
 - **Puck Damping:** Linear damping applied to the puck.
 - **Max Puck Speed:** Speed clamp for the puck.
 - **Mallet Speed:** Movement speed cap for mallets.
+- **Reset Physics:** Restores slippery, high‑energy defaults.

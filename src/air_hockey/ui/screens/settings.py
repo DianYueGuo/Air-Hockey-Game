@@ -37,6 +37,12 @@ class SettingsScreen:
             on_click=self._enter_main,
             font=self.font,
         )
+        self.physics_reset_button = Button(
+            rect=pygame.Rect(40, window_size[1] - 80, 180, 44),
+            label="Reset Physics",
+            on_click=self._reset_physics,
+            font=self.font,
+        )
         self.vision_back_button = Button(
             rect=pygame.Rect(window_size[0] - 220, window_size[1] - 80, 180, 44),
             label="Back to Settings",
@@ -240,6 +246,13 @@ class SettingsScreen:
         )
         self.message = "Physics updated. Re-enter Play."
 
+    def _reset_physics(self) -> None:
+        self.settings.puck_restitution = 1.0
+        self.settings.puck_damping = 0.0
+        self.settings.max_puck_speed = 8.0
+        self.settings.mallet_speed_limit = 2.0
+        self.message = "Physics reset. Re-enter Play."
+
     def _inc_smoothing(self) -> None:
         self.settings.smoothing = self._clamp(self.settings.smoothing + 0.05, 0.0, 1.0)
         self.message = "Vision updated. Re-enter Play."
@@ -292,6 +305,7 @@ class SettingsScreen:
             for button in self.physics_buttons:
                 button.handle_event(event)
             self.physics_back_button.handle_event(event)
+            self.physics_reset_button.handle_event(event)
         else:
             for button in self.vision_buttons:
                 button.handle_event(event)
@@ -327,6 +341,7 @@ class SettingsScreen:
                 msg_surf = self.small_font.render(self.message, True, (180, 190, 200))
                 msg_rect = msg_surf.get_rect(center=(self.window_size[0] // 2, 430))
                 surface.blit(msg_surf, msg_rect)
+            self.physics_reset_button.draw(surface)
             self.physics_back_button.draw(surface)
         else:
             self._draw_vision_values(surface)
