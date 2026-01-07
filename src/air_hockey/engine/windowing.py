@@ -21,3 +21,5 @@ class ScoreboardMode(str, Enum):
 class WindowOptions:
     webcam_view_mode: WebcamViewMode = WebcamViewMode.HIDDEN
     scoreboard_mode: ScoreboardMode = ScoreboardMode.HUD
+    fullscreen: bool = False
+    display_index: int = 0

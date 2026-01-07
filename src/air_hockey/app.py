@@ -11,6 +11,7 @@ from air_hockey.ui.screens.calibration import CalibrationScreen
 from air_hockey.ui.screens.menu import MenuScreen
 from air_hockey.ui.screens.play import PlayScreen
 from air_hockey.ui.screens.settings import SettingsScreen
+from air_hockey.engine.windowing import WindowOptions
 
 
 class Screen(Protocol):
@@ -51,9 +52,9 @@ class PlaceholderScreen:
 
 class App:
     def __init__(self, window_size: tuple[int, int]) -> None:
-        self.window_size = window_size
-        self.screen = pygame.display.set_mode(window_size)
-        pygame.display.set_caption("Air Hockey")
+        self.window_options = WindowOptions()
+        self.window_size = self._resolve_window_size(window_size)
+        self.screen = self._create_window(self.window_size)
         self.clock = pygame.time.Clock()
         self.menu_screen = MenuScreen(
             window_size=window_size,
@@ -80,6 +81,25 @@ class App:
         self.manager.current = PlayScreen(
             window_size=self.window_size, on_back=self._show_menu
         )
+
+    def _resolve_window_size(self, requested: tuple[int, int]) -> tuple[int, int]:
+        if not self.window_options.fullscreen:
+            return requested
+        display_info = pygame.display.Info()
+        return (display_info.current_w, display_info.current_h)
+
+    def _create_window(self, size: tuple[int, int]) -> pygame.Surface:
+        flags = pygame.FULLSCREEN if self.window_options.fullscreen else 0
+        display_count = pygame.display.get_num_displays()
+        display_index = self.window_options.display_index
+        if display_index < 0 or display_index >= display_count:
+            display_index = 0
+        try:
+            screen = pygame.display.set_mode(size, flags, display=display_index)
+        except TypeError:
+            screen = pygame.display.set_mode(size, flags)
+        pygame.display.set_caption("Air Hockey")
+        return screen
 
     def run(self) -> int:
         running = True
