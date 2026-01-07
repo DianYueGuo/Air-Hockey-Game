@@ -11,7 +11,12 @@ import pygame
 from air_hockey.config.io import save_calibration
 from air_hockey.engine.calibration import CalibrationData, PlayerCalibration
 from air_hockey.engine.camera import CameraCapture
-from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball
+from air_hockey.engine.vision import (
+    HSV_PRESETS,
+    MotionMasker,
+    detect_largest_ball,
+    detect_largest_ball_masked,
+)
 from air_hockey.ui.fonts import get_font
 from air_hockey.ui.widgets import Button
 
@@ -46,6 +51,8 @@ class CalibrationScreen:
         self.camera_active = self.camera.start()
         self.hsv_left = HSV_PRESETS["orange"]
         self.hsv_right = HSV_PRESETS["tennis"]
+        self.motion_mask_mode = "mog2"
+        self.motion_masker = MotionMasker() if self.motion_mask_mode == "mog2" else None
         self.last_detection_left: tuple[int, int] | None = None
         self.last_detection_right: tuple[int, int] | None = None
         self.steps = self._build_steps()
@@ -128,8 +135,15 @@ class CalibrationScreen:
         left_frame = frame_bgr[:, :mid_x]
         right_frame = frame_bgr[:, mid_x:]
 
-        left_result = detect_largest_ball(left_frame, self.hsv_left)
-        right_result = detect_largest_ball(right_frame, self.hsv_right)
+        if self.motion_masker:
+            motion_mask = self.motion_masker.apply(frame_bgr)
+            left_motion = motion_mask[:, :mid_x]
+            right_motion = motion_mask[:, mid_x:]
+            left_result = detect_largest_ball_masked(left_frame, self.hsv_left, left_motion)
+            right_result = detect_largest_ball_masked(right_frame, self.hsv_right, right_motion)
+        else:
+            left_result = detect_largest_ball(left_frame, self.hsv_left)
+            right_result = detect_largest_ball(right_frame, self.hsv_right)
 
         self.last_detection_left = left_result.center
         self.last_detection_right = right_result.center

@@ -24,6 +24,7 @@ class Settings:
     mallet_speed_limit: float = 1.2
     hsv_left_range: dict[str, list[int]] | None = None
     hsv_right_range: dict[str, list[int]] | None = None
+    motion_mask_mode: str = "off"
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -42,6 +43,7 @@ class Settings:
             "mallet_speed_limit": self.mallet_speed_limit,
             "hsv_left_range": self.hsv_left_range,
             "hsv_right_range": self.hsv_right_range,
+            "motion_mask_mode": self.motion_mask_mode,
         }
 
     @classmethod
@@ -62,4 +64,5 @@ class Settings:
             mallet_speed_limit=float(data.get("mallet_speed_limit", 1.2)),
             hsv_left_range=data.get("hsv_left_range"),
             hsv_right_range=data.get("hsv_right_range"),
+            motion_mask_mode=str(data.get("motion_mask_mode", "off")),
         )

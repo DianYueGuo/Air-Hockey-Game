@@ -64,6 +64,7 @@ class SettingsScreen:
             ("Scoreboard", self._toggle_scoreboard),
             ("Theme", self._toggle_theme),
             ("Sound Pack", self._toggle_sound_pack),
+            ("Motion Mask", self._toggle_motion_mask),
             ("Fullscreen", self._toggle_fullscreen),
             ("Display", self._cycle_display),
             ("Swap Colors", self._swap_hsv_presets),
@@ -199,6 +200,12 @@ class SettingsScreen:
     def _toggle_sound_pack(self) -> None:
         self.settings.sound_pack = "retro" if self.settings.sound_pack == "default" else "default"
         self.message = "Sound pack updated."
+
+    def _toggle_motion_mask(self) -> None:
+        self.settings.motion_mask_mode = (
+            "mog2" if self.settings.motion_mask_mode == "off" else "off"
+        )
+        self.message = "Motion mask updated. Re-enter Play or resume."
 
     def _toggle_fullscreen(self) -> None:
         self.settings.fullscreen = not self.settings.fullscreen
@@ -429,6 +436,7 @@ class SettingsScreen:
             "Scoreboard": f"Scoreboard: {self.settings.scoreboard_mode.value.upper()}",
             "Theme": f"Theme: {self.settings.theme.upper()}",
             "Sound Pack": f"Sound Pack: {self.settings.sound_pack.upper()}",
+            "Motion Mask": f"Motion Mask: {self.settings.motion_mask_mode.upper()}",
             "Fullscreen": f"Fullscreen: {'ON' if self.settings.fullscreen else 'OFF'}",
             "Display": f"Display: {self.settings.display_index}",
             "Swap Colors": "Swap Colors",

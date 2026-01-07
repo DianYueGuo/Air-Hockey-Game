@@ -11,7 +11,13 @@ import pygame
 from air_hockey.config.io import load_calibration, load_settings
 from air_hockey.engine.audio import AudioManager
 from air_hockey.engine.camera import CameraCapture
-from air_hockey.engine.vision import HSV_PRESETS, detect_largest_ball, resolve_hsv_range
+from air_hockey.engine.vision import (
+    HSV_PRESETS,
+    MotionMasker,
+    detect_largest_ball,
+    detect_largest_ball_masked,
+    resolve_hsv_range,
+)
 from air_hockey.engine.physics import PhysicsWorld
 from air_hockey.engine.windowing import ScoreboardMode, WebcamViewMode, WindowOptions
 from air_hockey.game.entities import MalletSpec
@@ -53,6 +59,8 @@ class PlayScreen:
         self.settings = settings
         self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
         self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
+        self.motion_mask_mode = settings.motion_mask_mode
+        self.motion_masker = MotionMasker() if self.motion_mask_mode == "mog2" else None
         self.last_detection_left: tuple[int, int] | None = None
         self.last_detection_right: tuple[int, int] | None = None
         self.use_camera_control = True
@@ -149,6 +157,10 @@ class PlayScreen:
 
         if old_sound_pack != settings.sound_pack:
             self.audio.reload(settings.sound_pack)
+
+        if self.motion_mask_mode != settings.motion_mask_mode:
+            self.motion_mask_mode = settings.motion_mask_mode
+            self.motion_masker = MotionMasker() if self.motion_mask_mode == "mog2" else None
 
         if old_webcam_mode == WebcamViewMode.WINDOW and settings.webcam_view_mode != WebcamViewMode.WINDOW:
             cv2.destroyWindow("Air Hockey Camera")
@@ -267,8 +279,15 @@ class PlayScreen:
         left_frame = frame_bgr[:, :mid_x]
         right_frame = frame_bgr[:, mid_x:]
 
-        left_result = detect_largest_ball(left_frame, self.hsv_left)
-        right_result = detect_largest_ball(right_frame, self.hsv_right)
+        if self.motion_masker:
+            motion_mask = self.motion_masker.apply(frame_bgr)
+            left_motion = motion_mask[:, :mid_x]
+            right_motion = motion_mask[:, mid_x:]
+            left_result = detect_largest_ball_masked(left_frame, self.hsv_left, left_motion)
+            right_result = detect_largest_ball_masked(right_frame, self.hsv_right, right_motion)
+        else:
+            left_result = detect_largest_ball(left_frame, self.hsv_left)
+            right_result = detect_largest_ball(right_frame, self.hsv_right)
 
         self.last_detection_left = left_result.center
         self.last_detection_right = right_result.center

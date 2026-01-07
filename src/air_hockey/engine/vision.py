@@ -40,6 +40,19 @@ def resolve_hsv_range(
 def detect_largest_ball(frame: np.ndarray, hsv_range: HsvRange) -> DetectionResult:
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, np.array(hsv_range.lower), np.array(hsv_range.upper))
+    return _detect_from_mask(mask)
+
+
+def detect_largest_ball_masked(
+    frame: np.ndarray, hsv_range: HsvRange, motion_mask: np.ndarray
+) -> DetectionResult:
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    color_mask = cv2.inRange(hsv, np.array(hsv_range.lower), np.array(hsv_range.upper))
+    combined = cv2.bitwise_and(color_mask, motion_mask)
+    return _detect_from_mask(combined)
+
+
+def _detect_from_mask(mask: np.ndarray) -> DetectionResult:
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
@@ -59,3 +72,15 @@ def detect_largest_ball(frame: np.ndarray, hsv_range: HsvRange) -> DetectionResu
     center_x = int(moments["m10"] / moments["m00"])
     center_y = int(moments["m01"] / moments["m00"])
     return DetectionResult(center=(center_x, center_y), contour_area=area)
+
+
+class MotionMasker:
+    def __init__(self) -> None:
+        self.subtractor = cv2.createBackgroundSubtractorMOG2(
+            history=200, varThreshold=16, detectShadows=False
+        )
+
+    def apply(self, frame: np.ndarray) -> np.ndarray:
+        mask = self.subtractor.apply(frame)
+        _, mask = cv2.threshold(mask, 200, 255, cv2.THRESH_BINARY)
+        return mask
