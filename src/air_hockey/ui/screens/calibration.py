@@ -50,7 +50,7 @@ class CalibrationScreen:
         self.camera = CameraCapture()
         self.camera_active = self.camera.start()
         self.hsv_left = HSV_PRESETS["orange"]
-        self.hsv_right = HSV_PRESETS["tennis"]
+        self.hsv_right = HSV_PRESETS["orange"]
         self.motion_mask_mode = "mog2"
         self.motion_masker = MotionMasker() if self.motion_mask_mode == "mog2" else None
         self.last_detection_left: tuple[int, int] | None = None
