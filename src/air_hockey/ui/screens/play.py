@@ -49,6 +49,7 @@ class PlayScreen:
             fullscreen=settings.fullscreen,
             display_index=settings.display_index,
         )
+        self.settings = settings
         self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
         self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
         self.last_detection_left: tuple[int, int] | None = None
@@ -120,6 +121,43 @@ class PlayScreen:
         puck_velocity = self.physics.entities.puck.linearVelocity
         speed = (puck_velocity[0] ** 2 + puck_velocity[1] ** 2) ** 0.5
         self.audio.update_puck_movement(speed)
+
+    def apply_settings(self) -> None:
+        settings = load_settings()
+        old_webcam_mode = self.window_options.webcam_view_mode
+        old_scoreboard_mode = self.window_options.scoreboard_mode
+        old_sound_pack = self.settings.sound_pack
+
+        self.window_options = WindowOptions(
+            webcam_view_mode=settings.webcam_view_mode,
+            scoreboard_mode=settings.scoreboard_mode,
+            fullscreen=settings.fullscreen,
+            display_index=settings.display_index,
+        )
+        self.theme_manager = ThemeManager(theme_name=settings.theme)
+        self.hud.score_color = self.theme_manager.theme.hud_score
+        self.mallet_speed = settings.mallet_speed_limit
+        self.smoothing = settings.smoothing
+        self.hsv_left = resolve_hsv_range(settings.hsv_left, settings.hsv_left_range)
+        self.hsv_right = resolve_hsv_range(settings.hsv_right, settings.hsv_right_range)
+        self.physics.update_puck_settings(
+            restitution=settings.puck_restitution,
+            damping=settings.puck_damping,
+            max_speed=settings.max_puck_speed,
+        )
+
+        if old_sound_pack != settings.sound_pack:
+            self.audio.reload(settings.sound_pack)
+
+        if old_webcam_mode == WebcamViewMode.WINDOW and settings.webcam_view_mode != WebcamViewMode.WINDOW:
+            cv2.destroyWindow("Air Hockey Camera")
+
+        if old_scoreboard_mode == ScoreboardMode.WINDOW and settings.scoreboard_mode == ScoreboardMode.HUD:
+            if self.scoreboard_window is not None:
+                self.scoreboard_window.close()
+                self.scoreboard_window = None
+
+        self.settings = settings
 
     def render(self, surface: pygame.Surface) -> None:
         surface.fill((10, 16, 22))

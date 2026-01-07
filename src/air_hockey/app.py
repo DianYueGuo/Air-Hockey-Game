@@ -114,6 +114,7 @@ class App:
         if self.play_screen is None:
             return
         self.play_screen.start_camera()
+        self.play_screen.apply_settings()
         self.manager.current = self.play_screen
 
     def _restart_play(self) -> None:

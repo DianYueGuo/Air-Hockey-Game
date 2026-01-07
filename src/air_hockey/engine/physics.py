@@ -141,6 +141,15 @@ class PhysicsWorld:
             scale = max_speed / (speed_sq ** 0.5)
             puck.linearVelocity = (vx * scale, vy * scale)
 
+    def update_puck_settings(
+        self, restitution: float, damping: float, max_speed: float
+    ) -> None:
+        self.max_puck_speed = max_speed
+        puck = self.entities.puck
+        puck.linearDamping = damping
+        if puck.fixtures:
+            puck.fixtures[0].restitution = restitution
+
     def set_mallet_positions(
         self, left_pos: tuple[float, float], right_pos: tuple[float, float]
     ) -> None:

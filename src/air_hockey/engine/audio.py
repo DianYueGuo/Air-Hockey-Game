@@ -54,6 +54,16 @@ class AudioManager:
             puck_move=self._load_sound("puck_move.wav"),
         )
 
+    def reload(self, sound_pack: str) -> None:
+        if not self.enabled:
+            return
+        candidate = DEFAULT_SOUND_DIR.parent / sound_pack
+        self.sound_dir = candidate if candidate.exists() else DEFAULT_SOUND_DIR
+        if self._movement_channel and self._movement_channel.get_busy():
+            self._movement_channel.stop()
+        self._movement_channel = None
+        self.sounds = self._load_sounds()
+
     def play_wall(self) -> None:
         if self.enabled and self.sounds.puck_hit_wall:
             self.sounds.puck_hit_wall.play()

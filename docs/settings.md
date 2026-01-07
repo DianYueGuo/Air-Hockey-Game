@@ -1,7 +1,7 @@
 # Settings Guide
 
 ## Overview
-Settings are stored per user and apply when entering Play. Some window settings require a full app restart.
+Settings are stored per user and apply when entering Play or resuming from Pause. Some window settings require a full app restart.
 
 ## Main Settings
 - **Webcam View:** Toggle between hidden, overlay, and separate window.
