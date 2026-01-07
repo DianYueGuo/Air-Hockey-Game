@@ -1,4 +1,4 @@
-"""Hand tracking using MediaPipe."""
+"""Hand tracking using MediaPipe Pose (wrist control)."""
 
 from __future__ import annotations
 
@@ -36,9 +36,8 @@ class HandTracker:
         self.process_every = max(1, process_every)
         self._frame_index = 0
         self._last_positions = HandPositions(left=None, right=None)
-        self._hands = mp.solutions.hands.Hands(
-            max_num_hands=2,
-            model_complexity=0,
+        self._pose = mp.solutions.pose.Pose(
+            model_complexity=1,
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5,
         )
@@ -53,31 +52,35 @@ class HandTracker:
             new_h = max(1, int(frame_bgr.shape[0] * scale))
             frame = cv2.resize(frame_bgr, (new_w, new_h), interpolation=cv2.INTER_AREA)
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self._hands.process(rgb)
+        results = self._pose.process(rgb)
 
         left_pos = None
         right_pos = None
-        if results.multi_hand_landmarks:
-            centers: list[tuple[int, int]] = []
-            for landmarks in results.multi_hand_landmarks:
-                cx, cy = self._palm_center(landmarks, frame.shape[1], frame.shape[0])
-                if scale < 1.0:
-                    cx = int(cx / scale)
-                    cy = int(cy / scale)
-                centers.append((cx, cy))
-            if centers:
-                centers.sort(key=lambda item: item[0])
-                left_pos = centers[0]
-                if len(centers) > 1:
-                    right_pos = centers[-1]
+        if results.pose_landmarks:
+            left_pos = self._wrist_position(
+                results.pose_landmarks, frame.shape[1], frame.shape[0], left=True
+            )
+            right_pos = self._wrist_position(
+                results.pose_landmarks, frame.shape[1], frame.shape[0], left=False
+            )
+            if scale < 1.0:
+                if left_pos is not None:
+                    left_pos = (int(left_pos[0] / scale), int(left_pos[1] / scale))
+                if right_pos is not None:
+                    right_pos = (int(right_pos[0] / scale), int(right_pos[1] / scale))
         self._last_positions = HandPositions(left=left_pos, right=right_pos)
         return self._last_positions
 
     @staticmethod
-    def _palm_center(landmarks, width: int, height: int) -> tuple[int, int]:
-        indices = [0, 5, 9, 13, 17]
-        xs = [landmarks.landmark[i].x for i in indices]
-        ys = [landmarks.landmark[i].y for i in indices]
-        x = int(sum(xs) / len(xs) * width)
-        y = int(sum(ys) / len(ys) * height)
+    def _wrist_position(landmarks, width: int, height: int, left: bool) -> Optional[tuple[int, int]]:
+        idx = (
+            mp.solutions.pose.PoseLandmark.LEFT_WRIST
+            if left
+            else mp.solutions.pose.PoseLandmark.RIGHT_WRIST
+        )
+        landmark = landmarks.landmark[idx]
+        if landmark.visibility < 0.5:
+            return None
+        x = int(landmark.x * width)
+        y = int(landmark.y * height)
         return (x, y)
