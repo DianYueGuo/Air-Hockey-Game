@@ -8,6 +8,7 @@ from typing import Callable
 import pygame
 
 from air_hockey.engine.audio import AudioManager
+from air_hockey.engine.camera import CameraCapture
 from air_hockey.engine.physics import PhysicsWorld
 from air_hockey.game.entities import MalletSpec
 from air_hockey.game.field import FieldSpec
@@ -27,6 +28,8 @@ class PlayScreen:
         self.field = FieldSpec()
         self.mallet_spec = MalletSpec()
         self.audio = AudioManager()
+        self.camera = CameraCapture()
+        self.camera_active = self.camera.start()
         self.physics = PhysicsWorld(
             self.field,
             on_puck_wall=self.audio.play_wall,
@@ -52,6 +55,8 @@ class PlayScreen:
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            if self.camera_active:
+                self.camera.stop()
             self.on_back()
 
     def update(self, dt: float) -> None:
